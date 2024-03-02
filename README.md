@@ -1,5 +1,5 @@
 # holesail-server
-Create and announce your server on the HyperDHT, to be used with other Holesail modules.
+Create and announce your server on the HyperDHT P2P protocol.
 
 ## Installation
 ```shell
@@ -8,14 +8,21 @@ npm i holesail-server --save-dev
 ## Usage
 Require a module
 ```js
-const DHT = require('./index.js')
+const DHT = require('holesail-server')
 ```
 Create instance of the holesailServer class
 ```js
 const server =  new DHT();
 ```
-Start and get the public key
+Start DHT and get the public key
 ```js
-server.serve(5000, '127.0.0.1');
+server.serve(5000, '127.0.0.1', () => {
+  console.log('Server 1 started');
+});
+
 console.log('Server public key:', server.getPublicKey());
+```
+Destroy the DHT server
+```js
+server.destroy();
 ```

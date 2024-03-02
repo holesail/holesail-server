@@ -1,6 +1,6 @@
 {
   "name": "holesail-server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Server module for holesail to create and announce local server on the DHT",
   "main": "index.js",
   "dependencies": {
@@ -18,8 +18,8 @@
   },
   "keywords": [
     "holesail",
-    "holesail",
-    "server"
+    "HyperDHT",
+    "Holepunch"
   ],
   "author": "supersuryaansh",
   "license": "ISC",
