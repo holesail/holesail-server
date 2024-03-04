@@ -7,11 +7,13 @@ const server2 = new HolesailServer();
 
 server1.serve(5000, '127.0.0.1', () => {
   console.log('Server 1 started');
-  server1.destroy()
+  console.log(server1.getPublicKey())
+  //server1.destroy()
 });
 
 server2.serve(5100, '127.0.0.1', () => {
   console.log('Server 2 started');
-   server2.destroy()
+  console.log(server2.getPublicKey())
+  // server2.destroy()
 });
 
