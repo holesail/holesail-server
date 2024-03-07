@@ -1,9 +1,9 @@
 // Importing required modules
 const HyperDHT = require('hyperdht')  // HyperDHT module for DHT functionality
 const net = require('net')  // Node.js net module for creating network clients and servers
-const libNet = require('@hyper-cmd/lib-net')  // Custom network library
+const libNet = require('hyper-cmd-lib-net')  // Custom network library
 const goodbye = require('graceful-goodbye')  // Graceful shutdown library
-const libKeys = require('@hyper-cmd/lib-keys') // To generate a random preSeed for server seed.
+const libKeys = require('hyper-cmd-lib-keys') // To generate a random preSeed for server seed.
 
 class holesailServer {
     constructor() {
