@@ -1,4 +1,6 @@
 # holesail-server
+[Join our Discord Support Server](https://discord.gg/TQVacE7Vnj)
+
 Create and announce your server on the HyperDHT P2P protocol.
 
 ## Installation
