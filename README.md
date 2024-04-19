@@ -25,14 +25,14 @@ server.serve(5000, '127.0.0.1', () => {
 console.log('Server public key:', server.getPublicKey());
 
 ```
-Optionally ou can also set a buffSeed to generate the same connection key every time
+Optionally you can also set a buffSeed to generate the same connection key every time
 ```js
 server.serve(5000, '127.0.0.1', () => {
   console.log('Server 1 started');
 },"4917816487c1822049939ff1abbf515663275105d01361bbc84fe2000e594539");
 //buffSeed needs to be of 64 char long
 ```
-```
+
 Destroy the DHT server
 ```js
 server.destroy();
