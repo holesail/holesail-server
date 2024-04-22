@@ -2,7 +2,6 @@
 const HyperDHT = require('hyperdht')  // HyperDHT module for DHT functionality
 const net = require('net')  // Node.js net module for creating network clients and servers
 const libNet = require('hyper-cmd-lib-net')  // Custom network library
-const goodbye = require('graceful-goodbye')  // Graceful shutdown library
 const libKeys = require('hyper-cmd-lib-keys') // To generate a random preSeed for server seed.
 
 class holesailServer {
@@ -29,19 +28,19 @@ class holesailServer {
   }
 
   //start the client on port and the address specified
-  serve (port, address, callback, buffSeed) {
+  serve (args,callback) {
     this.server = this.dht.createServer({
       reusableSocket: true
     }, c => {
       // Connection handling using custom connection piper function
       libNet.connPiper(c, () => {
         return net.connect(
-          { port: +port, host: address, allowHalfOpen: true }
+          { port: +args.port, host: args.address, allowHalfOpen: true }
         )
       }, { isServer: true, compress: false }, this.stats)
     })
 
-    this.server.listen(this.keyPair(buffSeed)).then(() => {
+    this.server.listen(this.keyPair(args.buffSeed)).then(() => {
       if (typeof callback === 'function') {
         callback() // Invoke the callback after the server has started
       }
@@ -50,10 +49,8 @@ class holesailServer {
 
   destroy () {
     this.dht.destroy()
-  }
-
-  async shutdown () {
-    await this.dht.destroy()
+    this.server.close()
+    return 0;
   }
 
   getPublicKey () {

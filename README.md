@@ -8,32 +8,50 @@ Create and announce your server on the HyperDHT P2P protocol.
 npm i holesail-server 
 ```
 ## Usage
-Require a module
+Require as a module
 ```js
-const DHT = require('holesail-server')
+const HolesailServer = require('holesail-server')
 ```
 Create instance of the holesailServer class
 ```js
-const server =  new DHT();
+const server =  new HolesailServer();
 ```
-Start DHT and get the public key
+Start server and get the public key
 ```js
-server.serve(5000, '127.0.0.1', () => {
-  console.log('Server 1 started');
-});
-
-console.log('Server public key:', server.getPublicKey());
+server.serve({port:5000, address:"127.0.0.1"}, () => {
+    console.log('Server started');
+    console.log(server.getPublicKey());
+    setTimeout(() => {
+      server1.destroy();
+      console.log('Server destroyed');
+  }, 6000);
+})
 
 ```
-Optionally ou can also set a buffSeed to generate the same connection key every time
+Optionally you can also set a buffSeed to generate the same connection key every time
 ```js
-server.serve(5000, '127.0.0.1', () => {
-  console.log('Server 1 started');
-},"4917816487c1822049939ff1abbf515663275105d01361bbc84fe2000e594539");
+server.serve({port:5000, address:"127.0.0.1",buffSeed:"4917816487c1822049939ff1abbf515663275105d01361bbc84fe2000e594539"}, () => {
+    console.log('Server started');
+    console.log(server.getPublicKey());
+    setTimeout(() => {
+      server1.destroy();
+      console.log('Server destroyed');
+  }, 6000);
+})
 //buffSeed needs to be of 64 char long
 ```
-```
+
 Destroy the DHT server
-```js
+
+```
 server.destroy();
 ```
+
+### Syntax:
+```
+server.serve(options,callback())
+```
+#### Options:
+- port: The port to listen on (required)
+- address: The local address, use 0.0.0.0 if you want to listen on all (required)
+- buffSeed: A 64 character long string, will be used as a buffer of the connector. Pass it if you want to use same connector everytime (Optional)
