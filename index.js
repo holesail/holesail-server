@@ -49,7 +49,6 @@ class holesailServer {
 
   destroy () {
     this.dht.destroy()
-    this.server.close()
     return 0;
   }
 
