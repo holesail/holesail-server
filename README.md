@@ -55,3 +55,4 @@ server.serve(options,callback())
 - port: The port to listen on (required)
 - address: The local address, use 0.0.0.0 if you want to listen on all (required)
 - buffSeed: A 64 character long string, will be used as a buffer of the connector. Pass it if you want to use same connector everytime (Optional)
+- secure: (boolean) (optional) (Recommended).  Prevents leaking access capability to HyperDHT. Listens on a different seed than the one needed to connect on.
