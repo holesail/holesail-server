@@ -87,11 +87,8 @@ class holesailServer {
 
     // Executed when a connection is received
     this.server.on('connection', (conn) => {
-      console.log('Started on: ' + args.port)
-
       // Receive data from UDP listner
       this.udpListner.on('message', (buf) => {
-        console.log('Pipe data to DHT: ', buf)
         // conn object is received from the remote
         // relay the UDP message to the DHT
         conn.rawStream.send(buf);
