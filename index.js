@@ -1,6 +1,8 @@
 // Importing required modules
 const HyperDHT = require('hyperdht')  // HyperDHT module for DHT functionality
 const net = require('net')  // Node.js net module for creating network clients and servers
+const udp = require('dgram') // required for UDP
+
 const libNet = require('@holesail/hyper-cmd-lib-net')  // Custom network library
 const libKeys = require('hyper-cmd-lib-keys') // To generate a random preSeed for server seed.
 const b4a = require('b4a')
@@ -38,14 +40,30 @@ class holesailServer {
     //generate the keypair
     this.keyPairGenerator(args.buffSeed)
     //this is needed for the secure mode to work and is implemented by HyperDHT
-      if(this.secure) {
-        var privateFirewall = (remotePublicKey) => {
-          return !b4a.equals(remotePublicKey, this.keyPair.publicKey);
-        }
-      }else{
-        var privateFirewall = false;
+    if (this.secure) {
+      var privateFirewall = (remotePublicKey) => {
+        return !b4a.equals(remotePublicKey, this.keyPair.publicKey)
       }
+    } else {
+      var privateFirewall = false
+    }
 
+    if (!args.udp) {
+      this.handleTCP(args, privateFirewall)
+    } else {
+      this.handleUDP(args, privateFirewall)
+    }
+
+    //start listening on the keyPair
+    this.server.listen(this.keyPair).then(() => {
+      if (typeof callback === 'function') {
+        callback() // Invoke the callback after the server has started
+      }
+    })
+  }
+
+  // Handle  TCP connections
+  handleTCP (args, privateFirewall) {
     this.server = this.dht.createServer({
       privateFirewall,
       reusableSocket: true
@@ -58,12 +76,30 @@ class holesailServer {
       }, { isServer: true, compress: false }, this.stats)
     })
 
-    //start listening on the keyPair
-    this.server.listen(this.keyPair).then(() => {
-      if (typeof callback === 'function') {
-        callback() // Invoke the callback after the server has started
-      }
+  }
+
+  // Handle UDP connections
+  handleUDP (args, privateFirewall) {
+    // Create DHT server
+    this.server = this.dht.createServer({ privateFirewall })
+    this.udpListner = udp.createSocket('udp4')
+    this.udpListner.bind(args.port, args.address)
+
+    // Executed when a connection is received
+    this.server.on('connection', (conn) => {
+      console.log('Started on: ' + args.port)
+
+      // Receive data from UDP listner
+      this.udpListner.on('message', (buf) => {
+        console.log('Pipe data to DHT: ', buf)
+        // conn object is received from the remote
+        // relay the UDP message to the DHT
+        conn.rawStream.send(buf);
+      })
     })
+
+    // Not handling replies in this scenario
+    // We are only relaying UDP to DHT, not sending/expecting a reply
   }
 
   //destroy the dht instance
@@ -76,9 +112,9 @@ class holesailServer {
   //Return the public/connection key
   getPublicKey () {
 
-    if(this.secure){
+    if (this.secure) {
       return b4a.toString(this.seed, 'hex')
-    }else{
+    } else {
       return this.keyPair.publicKey.toString('hex')
     }
 
