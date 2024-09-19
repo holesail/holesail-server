@@ -1,7 +1,9 @@
 // Importing required modules
 const HyperDHT = require('hyperdht')  // HyperDHT module for DHT functionality
 const net = require('net')  // Node.js net module for creating network clients and servers
-const udp = require('dgram') // required for UDP
+
+const UDX = require('udx-native') // required for UDP
+const udp = new UDX()
 
 const libNet = require('@holesail/hyper-cmd-lib-net')  // Custom network library
 const libKeys = require('hyper-cmd-lib-keys') // To generate a random preSeed for server seed.
