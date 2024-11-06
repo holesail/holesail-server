@@ -8,6 +8,7 @@
     "b4a": "^1.6.6",
     "hyper-cmd-lib-keys": "^0.0.2",
     "hyperdht": "^6.16.2",
+    "standard": "^17.1.2",
     "udx-native": "^1.11.2"
   },
   "scripts": {
