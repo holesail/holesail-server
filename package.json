@@ -1,13 +1,15 @@
 {
   "name": "holesail-server",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Server module for holesail to create and announce local server on the DHT",
   "main": "index.js",
   "dependencies": {
     "@holesail/hyper-cmd-lib-net": "^0.1.0",
     "b4a": "^1.6.6",
     "hyper-cmd-lib-keys": "^0.0.2",
-    "hyperdht": "^6.16.2"
+    "hyperdht": "^6.16.2",
+    "standard": "^17.1.2",
+    "udx-native": "^1.11.2"
   },
   "scripts": {
     "test": "node test.js"
