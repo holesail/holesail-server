@@ -17,6 +17,7 @@ class holesailServer {
     this.keyPair = null
     this.buffer = null
     this.seed = null
+    this.connection = null
   }
 
   keyPairGenerator (buffer) {
@@ -73,7 +74,7 @@ class holesailServer {
       },
       (c) => {
         // Connection handling using custom connection piper function
-        libNet.connPiper(
+       this.connection = libNet.connPiper(
           c,
           () => {
             return net.connect({

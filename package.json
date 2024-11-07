@@ -1,6 +1,6 @@
 {
   "name": "holesail-server",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Server module for holesail to create and announce local server on the DHT",
   "main": "index.js",
   "dependencies": {
