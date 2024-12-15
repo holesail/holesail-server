@@ -2,9 +2,6 @@
 const HyperDHT = require('hyperdht') // HyperDHT module for DHT functionality
 const net = require('net') // Node.js net module for creating network clients and servers
 
-const UDX = require('udx-native') // required for UDP
-const udp = new UDX()
-
 const libNet = require('@holesail/hyper-cmd-lib-net') // Custom network library
 const libKeys = require('hyper-cmd-lib-keys') // To generate a random preSeed for server seed.
 const b4a = require('b4a')
@@ -74,7 +71,7 @@ class holesailServer {
       },
       (c) => {
         // Connection handling using custom connection piper function
-       this.connection = libNet.connPiper(
+        this.connection = libNet.connPiper(
           c,
           () => {
             return net.connect({
@@ -97,31 +94,20 @@ class holesailServer {
       privateFirewall,
       reusableSocket: true
     })
-    this.udpListner = udp.createSocket('udp4')
-    this.udpListner.bind(args.port, args.address)
 
-    // Executed when a connection is received
-    this.server.on('connection', (conn) => {
-      // Handle errors
-      conn.on('error', (error) => {
-        console.log('Error: ', error)
-      })
-
-      // Receive data from UDP listner
-      this.udpListner.on('message', (buf) => {
-        // conn object is received from the remote
-        // relay the UDP message to the DHT
-        conn.send(Buffer.from(buf))
-      })
+    this.server.on('connection', (c) => {
+      this.connection = libNet.udpPiper(
+        c,
+        () => {
+          return libNet.udpConnect({
+            port: +args.port,
+            host: args.address
+          })
+        },
+        { isServer: true, compress: false },
+        this.stats
+      )
     })
-
-    // Handle errors
-    this.server.on('error', (error) => {
-      console.log('Error: ', error)
-    })
-
-    // Not handling replies in this scenario
-    // We are only relaying UDP to DHT, not sending/expecting a reply
   }
 
   // destroy the dht instance
