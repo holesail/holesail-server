@@ -1,6 +1,6 @@
 {
   "name": "holesail-server",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "Server module for holesail to create and announce local server on the DHT",
   "main": "index.js",
   "dependencies": {
@@ -21,8 +21,7 @@
   "keywords": [
     "holesail",
     "holesail-server",
-    "HyperDHT",
-    "Holepunch"
+    "HyperDHT"
   ],
   "author": "supersuryaansh",
   "license": "GNU GPL v3",
