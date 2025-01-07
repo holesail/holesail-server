@@ -66,7 +66,7 @@ class holesailServer {
   handleTCP(args, privateFirewall) {
     this.server = this.dht.createServer(
       {
-        privateFirewall,
+        firewall: privateFirewall,
         reusableSocket: true,
       },
       (c) => {
