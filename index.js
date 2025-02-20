@@ -1,129 +1,144 @@
 // Importing required modules
-const HyperDHT = require("hyperdht"); // HyperDHT module for DHT functionality
-const net = require("net"); // Node.js net module for creating network clients and servers
+const HyperDHT = require('hyperdht') // HyperDHT module for DHT functionality
+const net = require('net') // Node.js net module for creating network clients and servers
 
-const libNet = require("@holesail/hyper-cmd-lib-net"); // Custom network library
-const libKeys = require("hyper-cmd-lib-keys"); // To generate a random preSeed for server seed.
-const b4a = require("b4a");
+const libNet = require('@holesail/hyper-cmd-lib-net') // Custom network library
+const libKeys = require('hyper-cmd-lib-keys') // To generate a random preSeed for server seed.
+const b4a = require('b4a')
 
-class holesailServer {
-  constructor() {
-    this.dht = new HyperDHT();
-    this.stats = {};
-    this.server = null;
-    this.keyPair = null;
-    this.buffer = null;
-    this.seed = null;
-    this.connection = null;
+class HolesailServer {
+  constructor () {
+    this.dht = new HyperDHT()
+    this.stats = {}
+    this.server = null
+    this.keyPair = null
+    this.seed = null
+    this.connection = null
+    this.state = null
   }
 
-  keyPairGenerator(buffer) {
-    // Used to generate a seed
-    // if buffer key is provided by the user, allows to keep the same keyPair everytime.
-    if (buffer) {
-      this.buffer = buffer;
-    } else {
-      this.buffer = libKeys.randomBytes(32).toString("hex");
+  generateKeyPair (seed) {
+    // Allows us to keep the same keyPair everytime.
+    if (!seed) {
+      seed = libKeys.randomBytes(32).toString('hex')
     }
-
     // generate a seed from the buffer key
-    this.seed = Buffer.from(this.buffer, "hex");
+    this.seed = Buffer.from(seed, 'hex')
     // generate a keypair from the seed
-    this.keyPair = HyperDHT.keyPair(this.seed);
-    return this.keyPair;
+    this.keyPair = HyperDHT.keyPair(this.seed)
+    return this.keyPair
   }
 
   // start the client on port and the address specified
-  serve(args, callback) {
-    this.secure = args.secure === true;
+  serve (args, callback) {
+    this.args = args
+    this.secure = args.secure === true
 
     // generate the keypair
-    this.keyPairGenerator(args.buffSeed);
+    this.generateKeyPair(args.seed)
     // this is needed for the secure mode to work and is implemented by HyperDHT
+    let privateFirewall = false
     if (this.secure) {
-      var privateFirewall = (remotePublicKey) => {
-        return !b4a.equals(remotePublicKey, this.keyPair.publicKey);
-      };
-    } else {
-      var privateFirewall = false;
-    }
-
-    if (!args.udp) {
-      this.handleTCP(args, privateFirewall);
-    } else {
-      this.handleUDP(args, privateFirewall);
-    }
-
-    // start listening on the keyPair
-    this.server.listen(this.keyPair).then(() => {
-      if (typeof callback === "function") {
-        callback(); // Invoke the callback after the server has started
+      privateFirewall = (remotePublicKey) => {
+        return !b4a.equals(remotePublicKey, this.keyPair.publicKey)
       }
-    });
-  }
+    }
 
-  // Handle  TCP connections
-  handleTCP(args, privateFirewall) {
     this.server = this.dht.createServer(
       {
         firewall: privateFirewall,
-        reusableSocket: true,
+        reusableSocket: true
       },
       (c) => {
-        // Connection handling using custom connection piper function
-        this.connection = libNet.connPiper(
-          c,
-          () => {
-            return net.connect({
-              port: +args.port,
-              host: args.address,
-              allowHalfOpen: true,
-            });
-          },
-          { isServer: true, compress: false },
-          this.stats,
-        );
+        if (!args.udp) {
+          this.handleTCP(c, args)
+        } else {
+          this.handleUDP(c, args)
+        }
+      }
+    )
+
+    // start listening on the keyPair
+    this.server.listen(this.keyPair).then(() => {
+      if (typeof callback === 'function') {
+        callback() // Invoke the callback after the server has started
+      }
+      this.state = 'listening'
+    })
+  }
+
+  // Handle  TCP connections
+  handleTCP (c, args) {
+    // Connection handling using custom connection piper function
+    this.connection = libNet.connPiper(
+      c,
+      () => {
+        return net.connect({
+          port: +args.port,
+          host: args.address,
+          allowHalfOpen: true
+        })
       },
-    );
+      { isServer: true, compress: false },
+      this.stats
+    )
   }
 
   // Handle UDP connections
-  handleUDP(args, privateFirewall) {
-    this.server = this.dht.createServer({
-      privateFirewall,
-      reusableSocket: true,
-    });
-
-    this.server.on("connection", (c) => {
-      this.connection = libNet.udpPiper(
-        c,
-        () => {
-          return libNet.udpConnect({
-            port: +args.port,
-            host: args.address,
-          });
-        },
-        { isServer: true, compress: false },
-        this.stats,
-      );
-    });
-  }
-
-  // destroy the dht instance
-  // TODO: Fix issue with server not destroying but only DHT connection after destroy() is called.
-  destroy() {
-    this.dht.destroy();
-    return 0;
+  handleUDP (c, args) {
+    this.connection = libNet.udpPiper(
+      c,
+      () => {
+        return libNet.udpConnect({
+          port: +args.port,
+          host: args.address
+        })
+      },
+      { isServer: true, compress: false },
+      this.stats
+    )
   }
 
   // Return the public/connection key
-  getPublicKey() {
+  getPublicKey () {
     if (this.secure) {
-      return b4a.toString(this.seed, "hex");
+      return b4a.toString(this.seed, 'hex')
     } else {
-      return this.keyPair.publicKey.toString("hex");
+      return this.keyPair.publicKey.toString('hex')
     }
   }
-} // end server Class
 
-module.exports = holesailServer;
+  // resume functionality
+  async resume () {
+    await this.dht.resume()
+    this.state = 'listening'
+  }
+
+  async pause () {
+    await this.dht.suspend()
+    this.state = 'paused'
+  }
+
+  // destroy the dht instance and free up resources
+  async destroy () {
+    await this.dht.destroy()
+    this.dht = null
+    this.server = null
+    this.connection = null
+    this.state = 'destroyed'
+  }
+
+  get info () {
+    return {
+      state: this.state,
+      secure: this.secure,
+      port: this.args.port,
+      host: this.args.host,
+      protocol: this.args.udp ? 'udp' : 'tcp',
+      seed: this.args.seed,
+      publicKey: this.getPublicKey()
+    }
+  }
+}
+
+module.exports = HolesailServer
