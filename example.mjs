@@ -11,7 +11,7 @@ server1.serve(
     secure: true
   },
   async () => {
-    console.log('TCP started on 0.0.0.0:9000')
+    console.log('TCP started on 0.0.0.0:9001')
     console.log('Join with key: ', server1.getPublicKey())
   }
 )
