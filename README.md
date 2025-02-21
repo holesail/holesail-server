@@ -3,7 +3,7 @@
 
 [Join our Discord Support Server](https://discord.gg/TQVacE7Vnj)
 
-Holesail Server enables you to create  peer-to-peer (P2P) protocol using HyperDHT.
+Holesail Server enables you to reverse proxy servers peer-to-peer (P2P) using HyperDHT.
 
 ----------
 
@@ -40,7 +40,7 @@ const server = new HolesailServer();
 Start the server using the `serve` method and retrieve its public key:
 
 ```javascript
-server.serve({ port: 5000, address: "127.0.0.1" }, () => {
+server.serve({ port: 5000, host: "127.0.0.1" }, () => {
     console.log("Server started");
     console.log(server.getPublicKey());
 
