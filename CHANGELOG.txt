@@ -1,3 +1,7 @@
+v2.0.0
+-- Refactor code
+-- Add info, pause and resume functionality
+-- Bump modules
 v1.4.4
 -- Fix privateFirewall not initialising
 v1.4.3
