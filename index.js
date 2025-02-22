@@ -30,7 +30,7 @@ class HolesailServer {
   }
 
   // start the client on port and the address specified
-  serve (args, callback) {
+  async serve (args, callback) {
     this.args = args
     // For backward compatibility
     args.seed = args.seed || args.buffSeed
@@ -68,6 +68,18 @@ class HolesailServer {
       }
       this.state = 'listening'
     })
+
+    // put host information on the dht
+    await this.dht.mutablePut(
+      this.keyPair,
+      Buffer.from(
+        JSON.stringify({
+          host: this.info.host,
+          protocol: this.info.protocol,
+          port: this.info.port
+        })
+      )
+    )
   }
 
   // Handle  TCP connections

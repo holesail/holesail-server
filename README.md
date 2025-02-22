@@ -7,6 +7,7 @@ Holesail Server enables you to reverse proxy any local server peer-to-peer (P2P)
 
 ----------
 
+Note: V2 has breaking changes, V2 is not compatible with V1 and will break in future.
 ## Installation
 
 Install the Holesail Server module via npm:
@@ -40,7 +41,7 @@ const server = new HolesailServer();
 Start the server using the `serve` method and retrieve its public key:
 
 ```javascript
-server.serve({ port: 5000, host: "127.0.0.1" }, () => {
+await server.serve({ port: 5000, host: "127.0.0.1" }, () => {
     console.log("Server started");
     console.log(server.getPublicKey());
 
@@ -57,7 +58,7 @@ server.serve({ port: 5000, host: "127.0.0.1" }, () => {
 Optionally, you can set a `seed` to ensure the server generates the same connection key every time:
 
 ```javascript
-server.serve({
+await server.serve({
     port: 5000,
     host: "127.0.0.1",
     seed: "4917816487c1822049939ff1abbf515663275105d01361bbc84fe2000e594539"
@@ -65,8 +66,8 @@ server.serve({
     console.log("Server started");
     console.log(server.getPublicKey());
 
-    setTimeout(() => {
-        server.destroy();
+    setTimeout( async () => {
+        await server.destroy();
         console.log("Server destroyed");
     }, 6000);
 });
@@ -80,14 +81,14 @@ server.serve({
 Use the `destroy` method to stop the server and clean up resources:
 
 ```javascript
-server.destroy();
+await server.destroy();
 ```
 
 ----------
 
 ## API Reference
 
-### `server.serve(options, callback)`
+### `await server.serve(options, callback)`
 
 Starts the server
 
@@ -129,7 +130,7 @@ Returns an object containing server information.
 
 ----------
 
-### `server.destroy()`
+### `await server.destroy()`
 
 Stops the server and cleans up resources.
 

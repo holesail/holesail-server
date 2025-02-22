@@ -2,7 +2,7 @@ import HolesailServer from './index.js'
 
 const server1 = new HolesailServer()
 
-server1.serve(
+await server1.serve(
   {
     port: 9001,
     host: '0.0.0.0',
