@@ -47,11 +47,11 @@ test('destroy - should clean up resources properly', async (t) => {
   t.is(server.state, 'destroyed', 'Server state should be destroyed')
 })
 
-test('serve - should initialize and listen on generated key pair', async (t) => {
+test('start - should initialize and listen on generated key pair', async (t) => {
   const server = new HolesailServer()
   const args = { port: 8080, host: '127.0.0.1', secure: false, udp: false }
 
-  await new Promise((resolve) => server.serve(args, resolve))
+  await new Promise((resolve) => server.start(args, resolve))
 
   t.ok(server.server, 'Server should be initialized')
   t.ok(server.keyPair, 'Key pair should be generated')
@@ -78,7 +78,7 @@ test('info - should return correct server details', async (t) => {
   const server = new HolesailServer()
   const args = { port: 9090, host: '127.0.0.1', secure: true, udp: false, seed: 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890' }
 
-  await new Promise((resolve) => server.serve(args, resolve))
+  await server.start(args)
 
   const info = server.info
   t.is(info.state, 'listening', 'State should be listening')
