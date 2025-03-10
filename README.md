@@ -42,7 +42,7 @@ const server = new HolesailServer();
 Start the server using the `start` method and retrieve its public key:
 
 ```javascript
-await server.serve({ port: 5000, host: "127.0.0.1" }, () => {
+await server.start({ port: 5000, host: "127.0.0.1" }, () => {
   console.log("Server started");
   console.log(server.getPublicKey());
 
@@ -59,7 +59,7 @@ await server.serve({ port: 5000, host: "127.0.0.1" }, () => {
 Optionally, you can set a `seed` to ensure the server generates the same connection key every time:
 
 ```javascript
-await server.serve({
+await server.start({
   port: 5000,
   host: "127.0.0.1",
   seed: "4917816487c1822049939ff1abbf515663275105d01361bbc84fe2000e594539"
@@ -135,6 +135,11 @@ Returns an object containing server information.
 ### `await server.destroy()`
 
 Stops the server and cleans up resources.
+
+----------
+
+### `await put(data)`
+Put a mutable record on DHT. Max size 1 KB
 
 ----------
 
