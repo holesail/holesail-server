@@ -12,7 +12,7 @@
     "net": "npm:bare-net"
   },
   "scripts": {
-    "test": "npx standard && node test.mjs"
+    "test": "npx standard && node test.mjs && bare test.mjs"
   },
   "repository": {
     "type": "git",

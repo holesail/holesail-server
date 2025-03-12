@@ -51,12 +51,11 @@ test('start - should initialize and listen on generated key pair', async (t) => 
   const server = new HolesailServer()
   const args = { port: 8080, host: '127.0.0.1', secure: false, udp: false }
 
-  await new Promise((resolve) => server.start(args, resolve))
-
+  // await new Promise((resolve) => server.start(args, resolve))
+  await server.start(args)
   t.ok(server.server, 'Server should be initialized')
   t.ok(server.keyPair, 'Key pair should be generated')
   t.is(server.state, 'listening', 'Server state should be listening')
-
   await server.destroy()
 })
 
@@ -76,18 +75,24 @@ test('pause - should suspend the DHT instance', async (t) => {
 
 test('info - should return correct server details', async (t) => {
   const server = new HolesailServer()
-  const args = { port: 9090, host: '127.0.0.1', secure: true, udp: false, seed: 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890' }
+  const args = {
+    port: 9090,
+    host: '127.0.0.1',
+    secure: true,
+    udp: false,
+    seed: 'abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890'
+  }
 
-  await server.start(args)
-
-  const info = server.info
-  t.is(info.state, 'listening', 'State should be listening')
-  t.is(info.secure, true, 'Secure mode should be true')
-  t.is(info.port, 9090, 'Port should match')
-  t.is(info.host, '127.0.0.1', 'Host should match')
-  t.is(info.protocol, 'tcp', 'Protocol should be tcp')
-  t.is(info.seed, args.seed, 'Seed should match')
-  t.is(info.publicKey, server.getPublicKey(), 'Public key should match')
+  await server.start(args, async () => {
+    const info = server.info
+    t.is(info.state, 'listening', 'State should be listening')
+    t.is(info.secure, true, 'Secure mode should be true')
+    t.is(info.port, 9090, 'Port should match')
+    t.is(info.host, '127.0.0.1', 'Host should match')
+    t.is(info.protocol, 'tcp', 'Protocol should be tcp')
+    t.is(info.seed, args.seed, 'Seed should match')
+    t.is(info.publicKey, server.getPublicKey(), 'Public key should match')
+  })
 
   await server.destroy()
 })
