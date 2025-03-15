@@ -51,7 +51,6 @@ class HolesailServer {
       },
       (c) => {
         if (!args.udp) {
-          console.log('I executed in tcp')
           this.handleTCP(c, args)
         } else {
           this.handleUDP(c, args)
@@ -70,9 +69,9 @@ class HolesailServer {
     // put host information on the dht
     await this.put(
       JSON.stringify({
-        host: this.info.host,
-        protocol: this.info.protocol,
-        port: this.info.port
+        host: this.args.host,
+        udp: this.args.udp,
+        port: this.args.port
       })
     )
   }

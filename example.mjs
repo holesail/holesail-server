@@ -6,7 +6,7 @@ await server.start(
   {
     port: 9001,
     host: '0.0.0.0',
-    udp: false,
+    udp: true,
     seed: '88d4266fd4e6338d13b845fcf289579d209c897823b9217da3e161936f031589',
     secure: true
   },
