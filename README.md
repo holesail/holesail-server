@@ -44,7 +44,7 @@ Start the server using the `start` method and retrieve its public key:
 ```javascript
 await server.start({ port: 5000, host: "127.0.0.1" }, () => {
   console.log("Server started");
-  console.log(server.getPublicKey());
+  console.log(server.key);
 
   setTimeout(() => {
     server.destroy();
@@ -65,7 +65,7 @@ await server.start({
   seed: "4917816487c1822049939ff1abbf515663275105d01361bbc84fe2000e594539"
 }, () => {
   console.log("Server started");
-  console.log(server.getPublicKey());
+  console.log(server.key);
 
   setTimeout(async () => {
     await server.destroy();
@@ -108,7 +108,7 @@ Starts the server
 
 ----------
 
-### `server.getPublicKey()`
+### `server.key`
 
 Retrieves the server's public key. Use this key to connect to the server from a client.
 
