@@ -109,7 +109,7 @@ class HolesailServer {
   }
 
   // Return the public/connection key
-  getPublicKey () {
+  get key () {
     if (this.secure) {
       return b4a.toString(this.seed, 'hex')
     } else {
@@ -171,13 +171,15 @@ class HolesailServer {
   // return information about the server
   get info () {
     return {
+      type: 'server',
       state: this.state,
       secure: this.secure,
       port: this.args.port,
       host: this.args.host,
       protocol: this.args.udp ? 'udp' : 'tcp',
       seed: this.args.seed,
-      publicKey: this.getPublicKey()
+      key: this.key,
+      publicKey: b4a.toString(this.keyPair.publicKey, 'hex')
     }
   }
 }

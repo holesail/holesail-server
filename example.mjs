@@ -12,7 +12,7 @@ await server.start(
   },
   async () => {
     console.log('Reverse proxying TCP connection on 0.0.0.0:9001')
-    console.log('Join with key: ', server.getPublicKey())
+    // console.log('Join with key: ', server.getPublicKey())
     console.log(server.info)
   }
 )

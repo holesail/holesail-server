@@ -30,11 +30,11 @@ test('getPublicKey - should return correct key based on secure mode', async (t) 
   server.generateKeyPair()
 
   server.secure = false
-  const pubKeyInsecure = server.getPublicKey()
+  const pubKeyInsecure = server.key
   t.is(pubKeyInsecure, server.keyPair.publicKey.toString('hex'), 'Public key should match')
 
   server.secure = true
-  const pubKeySecure = server.getPublicKey()
+  const pubKeySecure = server.key
   t.is(pubKeySecure, b4a.toString(server.seed, 'hex'), 'Secure mode should return seed as hex')
   await server.destroy()
 })
@@ -91,7 +91,7 @@ test('info - should return correct server details', async (t) => {
     t.is(info.host, '127.0.0.1', 'Host should match')
     t.is(info.protocol, 'tcp', 'Protocol should be tcp')
     t.is(info.seed, args.seed, 'Seed should match')
-    t.is(info.publicKey, server.getPublicKey(), 'Public key should match')
+    t.is(info.key, server.key, 'Public key should match')
   })
 
   await server.destroy()
