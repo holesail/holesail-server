@@ -1,7 +1,6 @@
 import test from 'brittle'
 import HolesailServer from './index.js'
-import b4a from 'b4a'
-
+import z32 from 'z32'
 import libKeys from 'hyper-cmd-lib-keys'
 
 test('keyPairGenerator - should generate a deterministic key pair', async (t) => {
@@ -31,11 +30,11 @@ test('getPublicKey - should return correct key based on secure mode', async (t) 
 
   server.secure = false
   const pubKeyInsecure = server.key
-  t.is(pubKeyInsecure, server.keyPair.publicKey.toString('hex'), 'Public key should match')
+  t.is(pubKeyInsecure, z32.encode(server.keyPair.publicKey), 'Public key should match')
 
   server.secure = true
   const pubKeySecure = server.key
-  t.is(pubKeySecure, b4a.toString(server.seed, 'hex'), 'Secure mode should return seed as hex')
+  t.is(pubKeySecure, z32.encode(server.seed), 'Secure mode should return seed as hex')
   await server.destroy()
 })
 

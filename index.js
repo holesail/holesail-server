@@ -5,6 +5,7 @@ const net = require('net') // Node.js net module for creating network clients an
 const libNet = require('@holesail/hyper-cmd-lib-net') // Custom network library
 const libKeys = require('hyper-cmd-lib-keys') // To generate a random preSeed for server seed.
 const b4a = require('b4a')
+const z32 = require('z32')
 
 class HolesailServer {
   constructor () {
@@ -111,9 +112,9 @@ class HolesailServer {
   // Return the public/connection key
   get key () {
     if (this.secure) {
-      return b4a.toString(this.seed, 'hex')
+      return z32.encode(this.seed)
     } else {
-      return this.keyPair.publicKey.toString('hex')
+      return z32.encode(this.keyPair.publicKey)
     }
   }
 
@@ -179,7 +180,7 @@ class HolesailServer {
       protocol: this.args.udp ? 'udp' : 'tcp',
       seed: this.args.seed,
       key: this.key,
-      publicKey: b4a.toString(this.keyPair.publicKey, 'hex')
+      publicKey: z32.encode(this.keyPair.publicKey)
     }
   }
 }
