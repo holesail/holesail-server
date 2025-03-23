@@ -11,7 +11,8 @@ await server.start(
     secure: true
   },
   async () => {
-    console.log('Reverse proxying TCP connection on 0.0.0.0:9001')
+    const info = server.info
+    console.log(`Reverse proxying ${info.protocol} server on ${info.host}:${info.port}`)
     console.log('Join with key: ', server.key)
     console.log(server.info)
   }
