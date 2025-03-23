@@ -110,7 +110,7 @@ Starts the server
 
 ### `server.key`
 
-Retrieves the server's public key. Use this key to connect to the server from a client.
+Retrieves the server's connection key. Use this key to connect to the server from a client.
 
 ----------
 
