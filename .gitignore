@@ -2,3 +2,4 @@ node_modules
 .github
 .idea
 .DS_Store
+package-lock.json

@@ -9,10 +9,11 @@
     "bare-net": "^2.0.1",
     "hyper-cmd-lib-keys": "^0.0.2",
     "hyperdht": "^6.20.1",
-    "net": "npm:bare-net"
+    "net": "npm:bare-net",
+    "z32": "^1.1.0"
   },
   "scripts": {
-    "test": "node test.js"
+    "test": "npx standard && node test.mjs && bare test.mjs"
   },
   "repository": {
     "type": "git",

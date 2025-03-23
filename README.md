@@ -1,11 +1,13 @@
-
 # Holesail Server
 
 [Join our Discord Support Server](https://discord.gg/TQVacE7Vnj)
 
-Holesail Server enables you to reverse proxy any local server peer-to-peer (P2P) using HyperDHT, no signalling server required.
+Holesail Server enables you to reverse proxy any local server peer-to-peer (P2P) using HyperDHT, no signalling server
+required.
 
 ----------
+
+Note: V2 has breaking changes, V2 is not compatible with V1 and will break infuture.
 
 ## Installation
 
@@ -37,17 +39,17 @@ const server = new HolesailServer();
 
 ### Starting the Server
 
-Start the server using the `serve` method and retrieve its public key:
+Start the server using the `start` method and retrieve its public key:
 
 ```javascript
-server.serve({ port: 5000, host: "127.0.0.1" }, () => {
-    console.log("Server started");
-    console.log(server.getPublicKey());
+await server.start({ port: 5000, host: "127.0.0.1" }, () => {
+  console.log("Server started");
+  console.log(server.key);
 
-    setTimeout(() => {
-        server.destroy();
-        console.log("Server destroyed");
-    }, 6000);
+  setTimeout(() => {
+    server.destroy();
+    console.log("Server destroyed");
+  }, 6000);
 });
 
 ```
@@ -57,18 +59,18 @@ server.serve({ port: 5000, host: "127.0.0.1" }, () => {
 Optionally, you can set a `seed` to ensure the server generates the same connection key every time:
 
 ```javascript
-server.serve({
-    port: 5000,
-    host: "127.0.0.1",
-    seed: "4917816487c1822049939ff1abbf515663275105d01361bbc84fe2000e594539"
+await server.start({
+  port: 5000,
+  host: "127.0.0.1",
+  seed: "4917816487c1822049939ff1abbf515663275105d01361bbc84fe2000e594539"
 }, () => {
-    console.log("Server started");
-    console.log(server.getPublicKey());
+  console.log("Server started");
+  console.log(server.key);
 
-    setTimeout(() => {
-        server.destroy();
-        console.log("Server destroyed");
-    }, 6000);
+  setTimeout(async () => {
+    await server.destroy();
+    console.log("Server destroyed");
+  }, 6000);
 });
 
 // Note: seed must be a 64-character long string.
@@ -80,32 +82,33 @@ server.serve({
 Use the `destroy` method to stop the server and clean up resources:
 
 ```javascript
-server.destroy();
+await server.destroy();
 ```
 
 ----------
 
 ## API Reference
 
-### `server.serve(options, callback)`
+### `await server.start(options, callback)`
 
 Starts the server
 
 #### Parameters:
 
--   `options` (object):
-    
-    -   `port` (number, required): The port to listen on.
-    -   `host` (string, required): The local address to bind to. Use `"0.0.0.0"` to listen on all interfaces.
-    -   `seed` (string, optional): A 64-character string used to generate a consistent connection key.
-    -   `secure` (boolean, optional, recommended): Prevents leaking access capability to HyperDHT by listening on a different seed than the one needed to connect.
-    -   `udp` (boolean, optional): Enables UDP instead of TCP connections.
--   `callback` (function): A function that is called when the server successfully starts.
-    
+- `options` (object):
+
+    - `port` (number, required): The port to listen on.
+    - `host` (string, required): The local address to bind to. Use `"0.0.0.0"` to listen on all interfaces.
+    - `seed` (string, optional): A 64-character string used to generate a consistent connection key.
+    - `secure` (boolean, optional, recommended): Prevents leaking access capability to HyperDHT by listening on a
+      different seed than the one needed to connect.
+    - `udp` (boolean, optional): Enables UDP instead of TCP connections.
+    - `route` (string, optional): Store a route in the DHT, can be retrieved client side
+- `callback` (function): A function that is called when the server successfully starts.
 
 ----------
 
-### `server.getPublicKey()`
+### `server.key`
 
 Retrieves the server's public key. Use this key to connect to the server from a client.
 
@@ -129,9 +132,14 @@ Returns an object containing server information.
 
 ----------
 
-### `server.destroy()`
+### `await server.destroy()`
 
 Stops the server and cleans up resources.
+
+----------
+
+### `await put(data)`
+Put a mutable record on DHT. Max size 1 KB
 
 ----------
 

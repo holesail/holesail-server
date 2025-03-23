@@ -1,19 +1,19 @@
 import HolesailServer from './index.js'
 
-const server1 = new HolesailServer()
+const server = new HolesailServer()
 
-server1.serve(
+await server.start(
   {
     port: 9001,
     host: '0.0.0.0',
-    udp: false,
-    seed: 'c8233747d4b1aa259d3cfedd1b20364e35972c8e3af1d39b6041f5cea4f4a9d9',
+    udp: true,
+    seed: '88d4266fd4e6338d13b845fcf289579d209c897823b9217da3e161936f031589',
     secure: true
   },
   async () => {
-    console.log('TCP started on 0.0.0.0:9001')
-    console.log('Join with key: ', server1.getPublicKey())
+    const info = server.info
+    console.log(`Reverse proxying ${info.protocol} server on ${info.host}:${info.port}`)
+    console.log('Join with key: ', server.key)
+    console.log(server.info)
   }
 )
-
-console.log(server1.info)
