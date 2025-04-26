@@ -103,7 +103,6 @@ Starts the server
     - `secure` (boolean, optional, recommended): Prevents leaking access capability to HyperDHT by listening on a
       different seed than the one needed to connect.
     - `udp` (boolean, optional): Enables UDP instead of TCP connections.
-    - `route` (string, optional): Store a route in the DHT, can be retrieved client side
 - `callback` (function): A function that is called when the server successfully starts.
 
 ----------
