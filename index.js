@@ -60,7 +60,7 @@ class HolesailServer {
       (c) => {
         const encodedKey = z32.encode(c.remotePublicKey)
         this.logger.log(`Incoming connection received from ${encodedKey}`)
-        let count = this.activeConnections.get(encodedKey) || 0
+        const count = this.activeConnections.get(encodedKey) || 0
         this.activeConnections.set(encodedKey, count + 1)
         if (!args.udp) {
           this.handleTCP(c, args)
@@ -209,7 +209,7 @@ class HolesailServer {
       this.logger.log(`DHT put skipped (unchanged), seq: ${oldRecord.seq}`)
       return oldRecord.seq
     } else {
-      this.logger.log(`Existing DHT record found, updating`)
+      this.logger.log('Existing DHT record found, updating')
       opts.seq = oldRecord.seq + 1
       await this.dht.mutablePut(this.keyPair, data, opts)
       this.logger.log(`DHT put (updated) completed with seq: ${opts.seq}`)
