@@ -10,7 +10,8 @@
     "hyper-cmd-lib-keys": "^0.0.2",
     "hyperdht": "^6.20.1",
     "net": "npm:bare-net",
-    "z32": "^1.1.0"
+    "z32": "^1.1.0",
+    "holesail-logger": "file:../holesail-logger"
   },
   "scripts": {
     "test": "npx standard && node test.mjs && bare test.mjs"
