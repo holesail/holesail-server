@@ -1,14 +1,14 @@
 // Importing required modules
 const HyperDHT = require('hyperdht') // HyperDHT module for DHT functionality
 const net = require('net') // Node.js net module for creating network clients and servers
-
 const libNet = require('@holesail/hyper-cmd-lib-net') // Custom network library
 const libKeys = require('hyper-cmd-lib-keys') // To generate a random preSeed for server seed.
 const b4a = require('b4a')
 const z32 = require('z32')
 
 class HolesailServer {
-  constructor () {
+  constructor (opts = {}) {
+    this.logEnabled = opts.log || false
     this.dht = new HyperDHT()
     this.stats = {}
     this.server = null
@@ -16,6 +16,13 @@ class HolesailServer {
     this.seed = null
     this.state = null
     this.connection = null
+    this.activeConnections = new Map()
+  }
+
+  log (message) {
+    if (this.logEnabled) {
+      console.log(`${new Date().toISOString()} [HolesailServer] ${message}`)
+    }
   }
 
   generateKeyPair (seed) {
@@ -27,14 +34,15 @@ class HolesailServer {
     this.seed = Buffer.from(seed, 'hex')
     // generate a keypair from the seed
     this.keyPair = HyperDHT.keyPair(this.seed)
+    this.log(`Generated key pair from seed: ${seed}`)
     return this.keyPair
   }
 
   // start the client on port and the address specified
   async start (args, callback) {
+    this.log('Starting server')
     this.args = args
     this.secure = args.secure === true
-
     // generate the keypair
     this.generateKeyPair(args.seed)
     // this is needed for the secure mode to work and is implemented by HyperDHT
@@ -43,14 +51,20 @@ class HolesailServer {
       privateFirewall = (remotePublicKey) => {
         return !b4a.equals(remotePublicKey, this.keyPair.publicKey)
       }
+      this.log('Secure mode enabled with private firewall')
+    } else {
+      this.log('Secure mode disabled')
     }
-
     this.server = this.dht.createServer(
       {
         firewall: privateFirewall,
         reusableSocket: true
       },
       (c) => {
+        const encodedKey = z32.encode(c.remotePublicKey)
+        this.log(`Incoming connection received from ${encodedKey}`)
+        let count = this.activeConnections.get(encodedKey) || 0
+        this.activeConnections.set(encodedKey, count + 1)
         if (!args.udp) {
           this.handleTCP(c, args)
         } else {
@@ -58,67 +72,89 @@ class HolesailServer {
         }
       }
     )
-
+    this.log('Server created, awaiting listen')
     // start listening on the keyPair
     this.server.listen(this.keyPair).then(() => {
       this.state = 'listening'
+      this.log(`Server listening on key: ${this.key}`)
       if (typeof callback === 'function') {
         callback() // Invoke the callback after the server has started
       }
     })
 
     const interval = 50 * 60 * 1000
-
     // put host information on the dht
-    await this.put(
-      JSON.stringify({
-        host: this.args.host,
-        udp: this.args.udp,
-        port: this.args.port
-      })
-    )
-
+    const data = JSON.stringify({
+      host: this.args.host,
+      udp: this.args.udp,
+      port: this.args.port
+    })
+    this.log(`Putting initial DHT record: ${data}`)
+    await this.put(data)
     setInterval(async () => {
-      await this.put(
-        JSON.stringify({
-          host: this.args.host,
-          udp: this.args.udp,
-          port: this.args.port
-        })
-      )
+      this.log(`Putting periodic DHT record: ${data}`)
+      await this.put(data)
     }, interval)
   }
 
-  // Handle  TCP connections
+  // Handle TCP connections
   handleTCP (c, args) {
+    this.log('Handling TCP connection')
+    const encodedKey = z32.encode(c.remotePublicKey)
+    c.on('close', () => {
+      let count = this.activeConnections.get(encodedKey) || 1
+      count--
+      if (count <= 0) {
+        this.log(`Disconnected from ${encodedKey}`)
+        this.activeConnections.delete(encodedKey)
+      } else {
+        this.activeConnections.set(encodedKey, count)
+      }
+    })
     // Connection handling using custom connection piper function
     this.connection = libNet.connPiper(
       c,
       () => {
+        this.log(`Connecting to local TCP: ${args.host}:${args.port}`)
         return net.connect({
           port: +args.port,
-          host: args.address,
+          host: args.host,
           allowHalfOpen: true
         })
       },
-      { isServer: true, compress: false },
+      { isServer: true, compress: false, log: this.logEnabled },
       this.stats
     )
+    this.log('TCP connection piped')
   }
 
   // Handle UDP connections
   handleUDP (c, args) {
+    this.log('Handling UDP connection')
+    const encodedKey = z32.encode(c.remotePublicKey)
+    c.on('close', () => {
+      let count = this.activeConnections.get(encodedKey) || 1
+      count--
+      if (count <= 0) {
+        this.log(`Disconnected from ${encodedKey}`)
+        this.activeConnections.delete(encodedKey)
+      } else {
+        this.activeConnections.set(encodedKey, count)
+      }
+    })
     this.connection = libNet.udpPiper(
       c,
       () => {
+        this.log(`Connecting to local UDP: ${args.host}:${args.port}`)
         return libNet.udpConnect({
           port: +args.port,
-          host: args.address
+          host: args.host
         })
       },
-      { isServer: true, compress: false },
+      { isServer: true, compress: false, log: this.logEnabled },
       this.stats
     )
+    this.log('UDP connection piped')
   }
 
   // Return the public/connection key
@@ -132,52 +168,65 @@ class HolesailServer {
 
   // resume functionality
   async resume () {
+    this.log('Resuming server')
     await this.dht.resume()
     this.state = 'listening'
+    this.log('Server resumed')
   }
 
   async pause () {
+    this.log('Pausing server')
     await this.dht.suspend()
     this.state = 'paused'
+    this.log('Server paused')
   }
 
   // destroy the dht instance and free up resources
   async destroy () {
+    this.log('Destroying server')
     if (this.dht) await this.dht.destroy()
     this.dht = null
     if (this.server) this.server = null
     if (this.connection) this.connection = null
     this.state = 'destroyed'
+    this.log('Server destroyed')
   }
 
   // put a mutable record on the dht, can be retrieved by any client using the keypair, max limit is 1KB
   async put (data, opts = {}) {
+    this.log(`Putting DHT record: ${data}`)
     data = b4a.isBuffer(data) ? data : Buffer.from(data)
-
     if (opts.seq) {
       await this.dht.mutablePut(this.keyPair, data, opts)
+      this.log(`DHT put completed with seq: ${opts.seq}`)
       return opts.seq
     }
-
     const oldRecord = await this.get({ latest: true })
     if (!oldRecord) {
       const { seq } = await this.dht.mutablePut(this.keyPair, data, opts)
+      this.log(`DHT put (new) completed with seq: ${seq}`)
       return seq
     } else if (oldRecord.value === b4a.toString(data)) {
+      this.log(`DHT put skipped (unchanged), seq: ${oldRecord.seq}`)
       return oldRecord.seq
     } else {
       opts.seq = oldRecord.seq + 1
       await this.dht.mutablePut(this.keyPair, data, opts)
+      this.log(`DHT put (updated) completed with seq: ${opts.seq}`)
       return opts.seq
     }
   }
 
   // get mutable record from dht
   async get (opts = {}) {
+    this.log('Getting DHT record')
     const record = await this.dht.mutableGet(this.keyPair.publicKey, opts)
     if (record) {
-      return { seq: record.seq, value: b4a.toString(record.value) }
+      const value = b4a.toString(record.value)
+      this.log(`DHT get completed: seq=${record.seq}, value=${value}`)
+      return { seq: record.seq, value }
     }
+    this.log('DHT get: no record found')
     return null
   }
 
