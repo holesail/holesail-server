@@ -11,7 +11,7 @@
     "hyperdht": "^6.20.1",
     "net": "npm:bare-net",
     "z32": "^1.1.0",
-    "holesail-logger":  "^1.0.0"
+    "holesail-logger":  "^1.1.0"
   },
   "scripts": {
     "test": "npx standard && node test.mjs && bare test.mjs"

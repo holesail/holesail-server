@@ -9,7 +9,7 @@ const HolesailLogger = require('holesail-logger')
 
 class HolesailServer {
   constructor (opts = {}) {
-    this.logger = opts.logger || new HolesailLogger({ prefix: 'HolesailServer', enabled: false, level: 1 })
+    this.logger = opts.logger || new HolesailLogger({ prefix: 'Holesail', enabled: false, level: 1 })
     this.dht = new HyperDHT()
     this.stats = {}
     this.server = null
@@ -29,15 +29,15 @@ class HolesailServer {
     this.seed = Buffer.from(seed, 'hex')
     // generate a keypair from the seed
     this.keyPair = HyperDHT.keyPair(this.seed)
-    this.logger.debug(`Generated key pair from seed: ${seed}`)
+    this.logger.log({ type: 0, msg: `Generated key pair from seed: ${seed}` })
     return this.keyPair
   }
 
   // start the client on port and the address specified
   async start (args, callback) {
-    this.logger.log('Starting server')
+    this.logger.log({ type: 1, msg: 'Starting server' })
     await this.dht.ready()
-    this.logger.log('DHT bootstrapped and ready')
+    this.logger.log({ type: 1, msg: 'DHT bootstrapped and ready' })
     this.args = args
     this.secure = args.secure === true
     // generate the keypair
@@ -48,9 +48,9 @@ class HolesailServer {
       privateFirewall = (remotePublicKey) => {
         return !b4a.equals(remotePublicKey, this.keyPair.publicKey)
       }
-      this.logger.log('Secure mode enabled with private firewall')
+      this.logger.log({ type: 1, msg: 'Secure mode enabled with private firewall' })
     } else {
-      this.logger.log('Secure mode disabled')
+      this.logger.log({ type: 1, msg: 'Secure mode disabled' })
     }
     this.server = this.dht.createServer(
       {
@@ -59,7 +59,7 @@ class HolesailServer {
       },
       (c) => {
         const encodedKey = z32.encode(c.remotePublicKey)
-        this.logger.debug(`Incoming connection received from ${encodedKey}`)
+        this.logger.log({ type: 0, msg: `Incoming connection received from ${encodedKey}` })
         const count = this.activeConnections.get(encodedKey) || 0
         this.activeConnections.set(encodedKey, count + 1)
         if (!args.udp) {
@@ -69,11 +69,11 @@ class HolesailServer {
         }
       }
     )
-    this.logger.debug('Server created, awaiting listen')
+    this.logger.log({ type: 0, msg: 'Server created, awaiting listen' })
     // start listening on the keyPair
     this.server.listen(this.keyPair).then(() => {
       this.state = 'listening'
-      this.logger.log(`Server listening on key: ${this.key}`)
+      this.logger.log({ type: 1, msg: `Server listening on key: ${this.key}` })
       if (typeof callback === 'function') {
         callback() // Invoke the callback after the server has started
       }
@@ -86,23 +86,23 @@ class HolesailServer {
       udp: this.args.udp,
       port: this.args.port
     })
-    this.logger.debug(`Initializing DHT with host info: ${data}`)
+    this.logger.log({ type: 0, msg: `Initializing DHT with host info: ${data}` })
     await this.put(data)
     setInterval(async () => {
-      this.logger.debug(`Refreshing DHT record: ${data}`)
+      this.logger.log({ type: 0, msg: `Refreshing DHT record: ${data}` })
       await this.put(data)
     }, interval)
   }
 
   // Handle TCP connections
   handleTCP (c, args) {
-    this.logger.debug('Handling TCP connection')
+    this.logger.log({ type: 0, msg: 'Handling TCP connection' })
     const encodedKey = z32.encode(c.remotePublicKey)
     c.on('close', () => {
       let count = this.activeConnections.get(encodedKey) || 1
       count--
       if (count <= 0) {
-        this.logger.debug(`Disconnected from ${encodedKey}`)
+        this.logger.log({ type: 0, msg: `Disconnected from ${encodedKey}` })
         this.activeConnections.delete(encodedKey)
       } else {
         this.activeConnections.set(encodedKey, count)
@@ -112,7 +112,7 @@ class HolesailServer {
     this.connection = libNet.connPiper(
       c,
       () => {
-        this.logger.debug(`Connecting to local TCP: ${args.host}:${args.port}`)
+        this.logger.log({ type: 0, msg: `Connecting to local TCP: ${args.host}:${args.port}` })
         return net.connect({
           port: +args.port,
           host: args.host,
@@ -122,18 +122,18 @@ class HolesailServer {
       { isServer: true, compress: false, logger: this.logger },
       this.stats
     )
-    this.logger.debug('TCP connection piped')
+    this.logger.log({ type: 0, msg: 'TCP connection piped' })
   }
 
   // Handle UDP connections
   handleUDP (c, args) {
-    this.logger.debug('Handling UDP connection')
+    this.logger.log({ type: 0, msg: 'Handling UDP connection' })
     const encodedKey = z32.encode(c.remotePublicKey)
     c.on('close', () => {
       let count = this.activeConnections.get(encodedKey) || 1
       count--
       if (count <= 0) {
-        this.logger.debug(`Disconnected from ${encodedKey}`)
+        this.logger.log({ type: 0, msg: `Disconnected from ${encodedKey}` })
         this.activeConnections.delete(encodedKey)
       } else {
         this.activeConnections.set(encodedKey, count)
@@ -142,7 +142,7 @@ class HolesailServer {
     this.connection = libNet.udpPiper(
       c,
       () => {
-        this.logger.debug(`Connecting to local UDP: ${args.host}:${args.port}`)
+        this.logger.log({ type: 0, msg: `Connecting to local UDP: ${args.host}:${args.port}` })
         return libNet.udpConnect({
           port: +args.port,
           host: args.host
@@ -151,7 +151,7 @@ class HolesailServer {
       { isServer: true, compress: false, logger: this.logger },
       this.stats
     )
-    this.logger.debug('UDP connection piped')
+    this.logger.log({ type: 0, msg: 'UDP connection piped' })
   }
 
   // Return the public/connection key
@@ -165,54 +165,54 @@ class HolesailServer {
 
   // resume functionality
   async resume () {
-    this.logger.log('Resuming server')
+    this.logger.log({ type: 1, msg: 'Resuming server' })
     await this.dht.resume()
     this.state = 'listening'
-    this.logger.log('Server resumed')
+    this.logger.log({ type: 1, msg: 'Server resumed' })
   }
 
   async pause () {
-    this.logger.log('Pausing server')
+    this.logger.log({ type: 1, msg: 'Pausing server' })
     await this.dht.suspend()
     this.state = 'paused'
-    this.logger.log('Server paused')
+    this.logger.log({ type: 1, msg: 'Server paused' })
   }
 
   // destroy the dht instance and free up resources
   async destroy () {
-    this.logger.log('Destroying server')
+    this.logger.log({ type: 1, msg: 'Destroying server' })
     if (this.dht) await this.dht.destroy()
     this.dht = null
     if (this.server) this.server = null
     if (this.connection) this.connection = null
     this.state = 'destroyed'
-    this.logger.log('Server destroyed')
+    this.logger.log({ type: 1, msg: 'Server destroyed' })
   }
 
   // put a mutable record on the dht, can be retrieved by any client using the keypair, max limit is 1KB
   async put (data, opts = {}) {
-    this.logger.debug(`Putting DHT record: ${data}`)
+    this.logger.log({ type: 0, msg: `Putting DHT record: ${data}` })
     data = b4a.isBuffer(data) ? data : Buffer.from(data)
     if (opts.seq) {
       await this.dht.mutablePut(this.keyPair, data, opts)
-      this.logger.debug(`DHT put completed with seq: ${opts.seq}`)
+      this.logger.log({ type: 0, msg: `DHT put completed with seq: ${opts.seq}` })
       return opts.seq
     }
-    this.logger.debug('Checking for existing DHT record')
+    this.logger.log({ type: 0, msg: 'Checking for existing DHT record' })
     const oldRecord = await this.get({ latest: true })
     if (!oldRecord) {
-      this.logger.debug('No existing DHT record found, creating new')
+      this.logger.log({ type: 0, msg: 'No existing DHT record found, creating new' })
       const { seq } = await this.dht.mutablePut(this.keyPair, data, opts)
-      this.logger.debug(`DHT put (new) completed with seq: ${seq}`)
+      this.logger.log({ type: 0, msg: `DHT put (new) completed with seq: ${seq}` })
       return seq
     } else if (b4a.toString(oldRecord.value) === b4a.toString(data)) {
-      this.logger.debug(`DHT put skipped (unchanged), seq: ${oldRecord.seq}`)
+      this.logger.log({ type: 0, msg: `DHT put skipped (unchanged), seq: ${oldRecord.seq}` })
       return oldRecord.seq
     } else {
-      this.logger.debug('Existing DHT record found, updating')
+      this.logger.log({ type: 0, msg: 'Existing DHT record found, updating' })
       opts.seq = oldRecord.seq + 1
       await this.dht.mutablePut(this.keyPair, data, opts)
-      this.logger.debug(`DHT put (updated) completed with seq: ${opts.seq}`)
+      this.logger.log({ type: 0, msg: `DHT put (updated) completed with seq: ${opts.seq}` })
       return opts.seq
     }
   }
@@ -222,7 +222,7 @@ class HolesailServer {
     const record = await this.dht.mutableGet(this.keyPair.publicKey, opts)
     if (record) {
       const value = b4a.toString(record.value)
-      this.logger.debug(`Existing DHT record found: seq=${record.seq}, value=${value}`)
+      this.logger.log({ type: 0, msg: `Existing DHT record found: seq=${record.seq}, value=${value}` })
       return { seq: record.seq, value }
     }
     return null
