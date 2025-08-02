@@ -5,11 +5,10 @@ const libNet = require('@holesail/hyper-cmd-lib-net') // Custom network library
 const libKeys = require('hyper-cmd-lib-keys') // To generate a random preSeed for server seed.
 const b4a = require('b4a')
 const z32 = require('z32')
-const HolesailLogger = require('holesail-logger')
 
 class HolesailServer {
   constructor (opts = {}) {
-    this.logger = opts.logger || new HolesailLogger({ prefix: 'Holesail', enabled: false, level: 1 })
+    this.logger = opts.logger || { log: () => {} }
     this.dht = new HyperDHT()
     this.stats = {}
     this.server = null
@@ -48,9 +47,9 @@ class HolesailServer {
       privateFirewall = (remotePublicKey) => {
         return !b4a.equals(remotePublicKey, this.keyPair.publicKey)
       }
-      this.logger.log({ type: 1, msg: 'Secure mode enabled with private firewall' })
+      this.logger.log({ type: 1, msg: 'Using Private Mode' })
     } else {
-      this.logger.log({ type: 1, msg: 'Secure mode disabled' })
+      this.logger.log({ type: 1, msg: 'Using Public Mode' })
     }
     this.server = this.dht.createServer(
       {
