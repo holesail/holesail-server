@@ -35,8 +35,6 @@ class HolesailServer {
   // start the client on port and the address specified
   async start (args, callback) {
     this.logger.log({ type: 1, msg: 'Starting server' })
-    await this.dht.ready()
-    this.logger.log({ type: 1, msg: 'DHT bootstrapped and ready' })
     this.args = args
     this.secure = args.secure === true
     // generate the keypair
