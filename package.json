@@ -1,17 +1,17 @@
 {
   "name": "holesail-server",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Proxy any server peer-to-peer using Holepunching.",
   "main": "index.js",
   "dependencies": {
-    "@holesail/hyper-cmd-lib-net": "^0.2.0",
+    "@holesail/hyper-cmd-lib-net": "^0.4.0",
     "b4a": "^1.6.6",
     "bare-net": "^2.0.1",
     "hyper-cmd-lib-keys": "^0.0.2",
     "hyperdht": "^6.20.1",
     "net": "npm:bare-net",
     "z32": "^1.1.0",
-    "holesail-logger":  "^1.1.0"
+    "holesail-logger": "^1.1.0"
   },
   "scripts": {
     "test": "npx standard && node test.mjs && bare test.mjs"
