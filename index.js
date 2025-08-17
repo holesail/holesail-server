@@ -1,6 +1,5 @@
 // Importing required modules
 const HyperDHT = require('hyperdht') // HyperDHT module for DHT functionality
-const net = require('net') // Node.js net module for creating network clients and servers
 const libNet = require('@holesail/hyper-cmd-lib-net') // Custom network library
 const libKeys = require('hyper-cmd-lib-keys') // To generate a random preSeed for server seed.
 const b4a = require('b4a')
@@ -106,23 +105,11 @@ class HolesailServer {
       }
     })
     // Connection handling using custom connection piper function
-    this.connection = libNet.connPiper(
-      c,
-      () => {
-        this.logger.log({ type: 0, msg: `Connecting to local TCP: ${args.host}:${args.port}` })
-        return net.connect({
-          port: +args.port,
-          host: args.host,
-          allowHalfOpen: true
-        })
-      },
-      { isServer: true, compress: false, logger: this.logger },
-      this.stats
-    )
+    libNet.pipeTcpServer(c, { port: args.port, host: args.host }, { isServer: true, compress: false, logger: this.logger }, this.stats)
     this.logger.log({ type: 0, msg: 'TCP connection piped' })
   }
 
-  // Handle UDP connections
+  // Handle UDP connections (updated to use framed reliable tunneling)
   handleUDP (c, args) {
     this.logger.log({ type: 0, msg: 'Handling UDP connection' })
     const encodedKey = z32.encode(c.remotePublicKey)
@@ -136,19 +123,8 @@ class HolesailServer {
         this.activeConnections.set(encodedKey, count)
       }
     })
-    this.connection = libNet.udpPiper(
-      c,
-      () => {
-        this.logger.log({ type: 0, msg: `Connecting to local UDP: ${args.host}:${args.port}` })
-        return libNet.udpConnect({
-          port: +args.port,
-          host: args.host
-        })
-      },
-      { isServer: true, compress: false, logger: this.logger },
-      this.stats
-    )
-    this.logger.log({ type: 0, msg: 'UDP connection piped' })
+    libNet.pipeUdpFramedServer(c, { port: args.port, host: args.host }, this.logger)
+    this.logger.log({ type: 0, msg: 'UDP connection framed and piped' })
   }
 
   // Return the public/connection key
@@ -220,7 +196,7 @@ class HolesailServer {
     if (record) {
       const value = b4a.toString(record.value)
       this.logger.log({ type: 0, msg: `Existing DHT record found: seq=${record.seq}, value=${value}` })
-      return { seq: record.seq, value: value} 
+      return { seq: record.seq, value: value } 
     }
     return null
   }
