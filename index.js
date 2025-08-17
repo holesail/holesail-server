@@ -188,30 +188,30 @@ class HolesailServer {
 
   // put a mutable record on the dht, can be retrieved by any client using the keypair, max limit is 1KB
   async put (data, opts = {}) {
-    this.logger.log({ type: 0, msg: `Putting DHT record: ${data}` })
-    data = b4a.isBuffer(data) ? data : Buffer.from(data)
-    if (opts.seq) {
-      await this.dht.mutablePut(this.keyPair, data, opts)
-      this.logger.log({ type: 0, msg: `DHT put completed with seq: ${opts.seq}` })
-      return opts.seq
+    if (data == null) {
+      throw new Error('data cannot be undefined')
     }
+    this.logger.log({ type: 0, msg: `Putting DHT record: ${data}` })
+    this.logger.log({ type: 0, msg: `Incoming data type: ${typeof data}, value: ${data}` })
+    data = b4a.isBuffer(data) ? data : Buffer.from(data)
     this.logger.log({ type: 0, msg: 'Checking for existing DHT record' })
     const oldRecord = await this.get({ latest: true })
-    if (!oldRecord) {
-      this.logger.log({ type: 0, msg: 'No existing DHT record found, creating new' })
-      const { seq } = await this.dht.mutablePut(this.keyPair, data, opts)
-      this.logger.log({ type: 0, msg: `DHT put (new) completed with seq: ${seq}` })
-      return seq
-    } else if (b4a.toString(oldRecord.value) === b4a.toString(data)) {
-      this.logger.log({ type: 0, msg: `DHT put skipped (unchanged), seq: ${oldRecord.seq}` })
-      return oldRecord.seq
+    const putOpts = { ...opts }
+    if (oldRecord) {
+      if (oldRecord.value == null) {
+        this.logger.log({ type: 0, msg: 'oldRecord.value is null or undefined' })
+        putOpts.seq = oldRecord.seq + 1
+      } else {
+        const same = b4a.equals(b4a.from(oldRecord.value), data)
+        putOpts.seq = same ? oldRecord.seq : oldRecord.seq + 1
+        this.logger.log({ type: 0, msg: `Existing record found, putting with seq: ${putOpts.seq} (same: ${same})` })
+      }
     } else {
-      this.logger.log({ type: 0, msg: 'Existing DHT record found, updating' })
-      opts.seq = oldRecord.seq + 1
-      await this.dht.mutablePut(this.keyPair, data, opts)
-      this.logger.log({ type: 0, msg: `DHT put (updated) completed with seq: ${opts.seq}` })
-      return opts.seq
+      this.logger.log({ type: 0, msg: 'No existing DHT record found, creating new' })
     }
+    const { seq } = await this.dht.mutablePut(this.keyPair, data, putOpts)
+    this.logger.log({ type: 0, msg: `DHT put completed with seq: ${seq}` })
+    return seq
   }
 
   // get mutable record from dht
@@ -220,7 +220,7 @@ class HolesailServer {
     if (record) {
       const value = b4a.toString(record.value)
       this.logger.log({ type: 0, msg: `Existing DHT record found: seq=${record.seq}, value=${value}` })
-      return { seq: record.seq, value }
+      return { seq: record.seq, value: record.value } // return buffer
     }
     return null
   }
