@@ -220,7 +220,7 @@ class HolesailServer {
     if (record) {
       const value = b4a.toString(record.value)
       this.logger.log({ type: 0, msg: `Existing DHT record found: seq=${record.seq}, value=${value}` })
-      return { seq: record.seq, value: record.value } // return buffer
+      return { seq: record.seq, value: record } 
     }
     return null
   }
