@@ -105,7 +105,7 @@ class HolesailServer {
       }
     })
     // Connection handling using custom connection piper function
-    libNet.pipeTcpServer(c, { port: args.port, host: args.host }, { isServer: true, compress: false, logger: this.logger }, this.stats)
+    this.connection = libNet.pipeTcpServer(c, { port: args.port, host: args.host }, { isServer: true, compress: false, logger: this.logger }, this.stats)
     this.logger.log({ type: 0, msg: 'TCP connection piped' })
   }
 
@@ -123,7 +123,7 @@ class HolesailServer {
         this.activeConnections.set(encodedKey, count)
       }
     })
-    libNet.pipeUdpFramedServer(c, { port: args.port, host: args.host }, this.logger)
+    this.connection = libNet.pipeUdpFramedServer(c, { port: args.port, host: args.host }, this.logger)
     this.logger.log({ type: 0, msg: 'UDP connection framed and piped' })
   }
 
