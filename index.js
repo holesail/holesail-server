@@ -123,7 +123,7 @@ class HolesailServer {
         this.activeConnections.set(encodedKey, count)
       }
     })
-    this.connection = libNet.pipeUdpFramedServer(c, { port: args.port, host: args.host }, this.logger)
+    this.connection = libNet.pipeUdpFramedServer(c, { port: args.port, host: args.host }, this.logger, this.stats)
     this.logger.log({ type: 0, msg: 'UDP connection framed and piped' })
   }
 
@@ -196,7 +196,7 @@ class HolesailServer {
     if (record) {
       const value = b4a.toString(record.value)
       this.logger.log({ type: 0, msg: `Existing DHT record found: seq=${record.seq}, value=${value}` })
-      return { seq: record.seq, value: value } 
+      return { seq: record.seq, value }
     }
     return null
   }
