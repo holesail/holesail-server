@@ -4,7 +4,7 @@
   "description": "Proxy any server peer-to-peer using Holepunching.",
   "main": "index.js",
   "dependencies": {
-    "@holesail/hyper-cmd-lib-net": "^1.1.1",
+    "@holesail/hyper-cmd-lib-net": "^1.1.2",
     "b4a": "^1.7.3",
     "hyper-cmd-lib-keys": "^0.2.0",
     "hyperdht": "^6.27.0",
