@@ -6,7 +6,7 @@ const b4a = require('b4a')
 const z32 = require('z32')
 
 class HolesailServer {
-  constructor (opts = {}) {
+  constructor(opts = {}) {
     this.logger = opts.logger || { log: () => {} }
     this.dht = new HyperDHT()
     this.stats = {}
@@ -19,7 +19,7 @@ class HolesailServer {
     this.activeConnections = new Map()
   }
 
-  generateKeyPair (seed) {
+  generateKeyPair(seed) {
     // Allows us to keep the same keyPair everytime.
     if (!seed) {
       seed = libKeys.randomBytes(32).toString('hex')
@@ -33,7 +33,7 @@ class HolesailServer {
   }
 
   // start the client on port and the address specified
-  async start (args, callback) {
+  async start(args, callback) {
     this.logger.log({ type: 1, msg: 'Starting server' })
     this.args = args
     this.secure = args.secure === true
@@ -56,7 +56,10 @@ class HolesailServer {
       },
       (c) => {
         const encodedKey = z32.encode(c.remotePublicKey)
-        this.logger.log({ type: 0, msg: `Incoming connection received from ${encodedKey}` })
+        this.logger.log({
+          type: 0,
+          msg: `Incoming connection received from ${encodedKey}`
+        })
         const count = this.activeConnections.get(encodedKey) || 0
         this.activeConnections.set(encodedKey, count + 1)
         if (!args.udp) {
@@ -83,7 +86,10 @@ class HolesailServer {
       udp: this.args.udp,
       port: this.args.port
     })
-    this.logger.log({ type: 0, msg: `Initializing DHT with host info: ${data}` })
+    this.logger.log({
+      type: 0,
+      msg: `Initializing DHT with host info: ${data}`
+    })
     await this.put(data)
     this.refreshInterval = setInterval(async () => {
       this.logger.log({ type: 0, msg: `Refreshing DHT record: ${data}` })
@@ -92,7 +98,7 @@ class HolesailServer {
   }
 
   // Handle TCP connections
-  handleTCP (c, args) {
+  handleTCP(c, args) {
     this.logger.log({ type: 0, msg: 'Handling TCP connection' })
     const encodedKey = z32.encode(c.remotePublicKey)
     c.on('close', () => {
@@ -106,12 +112,17 @@ class HolesailServer {
       }
     })
     // Connection handling using custom connection piper function
-    this.connection = libNet.pipeTcpServer(c, { port: args.port, host: args.host }, { isServer: true, compress: false, logger: this.logger }, this.stats)
+    this.connection = libNet.pipeTcpServer(
+      c,
+      { port: args.port, host: args.host },
+      { isServer: true, compress: false, logger: this.logger },
+      this.stats
+    )
     this.logger.log({ type: 0, msg: 'TCP connection piped' })
   }
 
   // Handle UDP connections (updated to use framed reliable tunneling)
-  handleUDP (c, args) {
+  handleUDP(c, args) {
     this.logger.log({ type: 0, msg: 'Handling UDP connection' })
     const encodedKey = z32.encode(c.remotePublicKey)
     c.on('close', () => {
@@ -124,12 +135,17 @@ class HolesailServer {
         this.activeConnections.set(encodedKey, count)
       }
     })
-    this.connection = libNet.pipeUdpFramedServer(c, { port: args.port, host: args.host }, this.logger, this.stats)
+    this.connection = libNet.pipeUdpFramedServer(
+      c,
+      { port: args.port, host: args.host },
+      this.logger,
+      this.stats
+    )
     this.logger.log({ type: 0, msg: 'UDP connection framed and piped' })
   }
 
   // Return the public/connection key
-  get key () {
+  get key() {
     if (this.secure) {
       return z32.encode(this.seed)
     } else {
@@ -138,14 +154,14 @@ class HolesailServer {
   }
 
   // resume functionality
-  async resume () {
+  async resume() {
     this.logger.log({ type: 1, msg: 'Resuming server' })
     await this.dht.resume()
     this.state = 'listening'
     this.logger.log({ type: 1, msg: 'Server resumed' })
   }
 
-  async pause () {
+  async pause() {
     this.logger.log({ type: 1, msg: 'Pausing server' })
     await this.dht.suspend()
     this.state = 'paused'
@@ -153,7 +169,7 @@ class HolesailServer {
   }
 
   // destroy the dht instance and free up resources
-  async destroy () {
+  async destroy() {
     this.logger.log({ type: 1, msg: 'Destroying server' })
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval)
@@ -169,27 +185,39 @@ class HolesailServer {
   }
 
   // put a mutable record on the dht, can be retrieved by any client using the keypair, max limit is 1KB
-  async put (data, opts = {}) {
+  async put(data, opts = {}) {
     if (data == null) {
       throw new Error('data cannot be undefined')
     }
     this.logger.log({ type: 0, msg: `Putting DHT record: ${data}` })
-    this.logger.log({ type: 0, msg: `Incoming data type: ${typeof data}, value: ${data}` })
+    this.logger.log({
+      type: 0,
+      msg: `Incoming data type: ${typeof data}, value: ${data}`
+    })
     data = b4a.isBuffer(data) ? data : Buffer.from(data)
     this.logger.log({ type: 0, msg: 'Checking for existing DHT record' })
     const oldRecord = await this.get({ latest: true })
     const putOpts = { ...opts }
     if (oldRecord) {
       if (oldRecord.value == null) {
-        this.logger.log({ type: 0, msg: 'oldRecord.value is null or undefined' })
+        this.logger.log({
+          type: 0,
+          msg: 'oldRecord.value is null or undefined'
+        })
         putOpts.seq = oldRecord.seq + 1
       } else {
         const same = b4a.equals(b4a.from(oldRecord.value), data)
         putOpts.seq = same ? oldRecord.seq : oldRecord.seq + 1
-        this.logger.log({ type: 0, msg: `Existing record found, putting with seq: ${putOpts.seq} (same: ${same})` })
+        this.logger.log({
+          type: 0,
+          msg: `Existing record found, putting with seq: ${putOpts.seq} (same: ${same})`
+        })
       }
     } else {
-      this.logger.log({ type: 0, msg: 'No existing DHT record found, creating new' })
+      this.logger.log({
+        type: 0,
+        msg: 'No existing DHT record found, creating new'
+      })
     }
     const { seq } = await this.dht.mutablePut(this.keyPair, data, putOpts)
     this.logger.log({ type: 0, msg: `DHT put completed with seq: ${seq}` })
@@ -197,18 +225,21 @@ class HolesailServer {
   }
 
   // get mutable record from dht
-  async get (opts = {}) {
+  async get(opts = {}) {
     const record = await this.dht.mutableGet(this.keyPair.publicKey, opts)
     if (record) {
       const value = b4a.toString(record.value)
-      this.logger.log({ type: 0, msg: `Existing DHT record found: seq=${record.seq}, value=${value}` })
-      return { seq: record.seq, value: value } 
+      this.logger.log({
+        type: 0,
+        msg: `Existing DHT record found: seq=${record.seq}, value=${value}`
+      })
+      return { seq: record.seq, value: value }
     }
     return null
   }
 
   // return information about the server
-  get info () {
+  get info() {
     return {
       type: 'server',
       state: this.state,
