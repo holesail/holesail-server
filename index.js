@@ -15,6 +15,7 @@ class HolesailServer {
     this.seed = null
     this.state = null
     this.connection = null
+    this.refreshInterval = null
     this.activeConnections = new Map()
   }
 
@@ -84,7 +85,7 @@ class HolesailServer {
     })
     this.logger.log({ type: 0, msg: `Initializing DHT with host info: ${data}` })
     await this.put(data)
-    setInterval(async () => {
+    this.refreshInterval = setInterval(async () => {
       this.logger.log({ type: 0, msg: `Refreshing DHT record: ${data}` })
       await this.put(data)
     }, interval)
@@ -154,6 +155,11 @@ class HolesailServer {
   // destroy the dht instance and free up resources
   async destroy () {
     this.logger.log({ type: 1, msg: 'Destroying server' })
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval)
+      this.refreshInterval = null
+      this.logger.log({ type: 1, msg: 'Cleared DHT refresh interval' })
+    }
     if (this.dht) await this.dht.destroy()
     this.dht = null
     if (this.server) this.server = null
