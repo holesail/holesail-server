@@ -5,11 +5,13 @@
   "main": "index.js",
   "dependencies": {
     "@holesail/hyper-cmd-lib-net": "^1.1.2",
-    "b4a": "^1.7.3",
+    "b4a": "^1.8.0",
+    "crypto": "npm:bare-crypto@^1.13.4",
     "hyper-cmd-lib-keys": "^0.2.0",
-    "hyperdht": "^6.27.0",
-    "z32": "^1.1.0",
-    "holesail-logger": "^1.1.0"
+    "hyperdht": "^6.30.0",
+    "protomux": "^3.10.1",
+    "ready-resource": "^1.2.0",
+    "z32": "^1.1.0"
   },
   "scripts": {
     "test": "npm run lint-check && node test.mjs && bare test.mjs",
@@ -32,8 +34,8 @@
   },
   "homepage": "https://github.com/holesail/holesail-server#readme",
   "devDependencies": {
-    "brittle": "^3.10.1",
-    "prettier": "^3.6.2",
+    "brittle": "^3.19.1",
+    "prettier": "^3.8.2",
     "prettier-config-holepunch": "^2.0.0"
   }
 }
