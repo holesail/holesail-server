@@ -1,19 +1,19 @@
-// Importing required modules
-const HyperDHT = require('hyperdht') // HyperDHT module for DHT functionality
-const libNet = require('/Volumes/superdisk/Developer/hyper-cmd-lib-net') // Custom network library
+const HyperDHT = require('hyperdht')
+const libNet = require('@holesail/hyper-cmd-lib-net')
 const b4a = require('b4a')
 const z32 = require('z32')
-const Protomux = require('protomux')
 const ReadyResource = require('ready-resource')
-const c = require('compact-encoding')
-const { generate } = require('/Volumes/superdisk/Developer/verify/index.js')
+const { generate } = require('@holesail/invite')
+const proto = require('@holesail/protocol')
+
+const { MODE_TUNNEL, MODE_PROBE } = proto
 
 class HolesailServer extends ReadyResource {
   constructor(opts = {}) {
     super()
     this.logger = opts.logger || {
       debug: () => {},
-      info: (data) => console.log(data),
+      info: () => {},
       warn: () => {},
       error: () => {}
     }
@@ -22,8 +22,7 @@ class HolesailServer extends ReadyResource {
     this.port = opts.port
     this.seed = opts.seed
 
-    this.dht = new HyperDHT()
-    this.stats = {}
+    this.dht = new HyperDHT({ bootstrap: opts.bootstrap })
     this.server = null
     this.keyPair = null
     this.state = null
@@ -40,85 +39,67 @@ class HolesailServer extends ReadyResource {
     await this._start()
   }
 
-  // start the client on port and the address specified
   async _start() {
     this.logger.info('Starting server')
 
-    this.server = this.dht.createServer(
-      {
-        reusableSocket: true
-      },
-      (stream) => {
-        this.logger.debug('Received stream from remote')
-        const mux = new Protomux(stream)
-
-        const auth = mux.createChannel({
-          protocol: 'holesail-auth',
-          onopen: () => {
-            this.logger.debug('Client opened auth protocol')
-          },
-          messages: [
-            {
-              encoding: c.any,
-              onmessage: (m) => {
-                const encodedKey = z32.encode(stream.remotePublicKey)
-                this.logger.info(`Incoming connection received from ${encodedKey}`)
-
-                if (!b4a.equals(m.capability, this.capability)) {
-                  this.logger.warn('Client verification failed')
-                  // TODO: destroy stream here
-                } else {
-                  this.logger.info('Client verified succesfuly')
-                  const count = this.activeConnections.get(encodedKey) || 0
-                  this.activeConnections.set(encodedKey, count + 1)
-                  if (!this.udp) {
-                    this._handleTCP(stream)
-                  } else {
-                    this._handleUDP(stream)
-                  }
-                }
-              }
-            }
-          ]
-        })
-        auth.open()
-
-        const probe = mux.createChannel({
-          protocol: 'holesail-probe',
-          onopen: () => {
-            this.logger.debug('Client opened probe protocol')
-          },
-          messages: [
-            {
-              encoding: c.any,
-              onmessage: (m) => {
-                const encodedKey = z32.encode(stream.remotePublicKey)
-                this.logger.info(`Incoming probe received from ${encodedKey}`)
-
-                if (!b4a.equals(m.capability, this.capability)) {
-                  this.logger.warn('Client verification failed')
-                  // TODO: destroy stream here
-                } else {
-                  this.logger.info('Client verified succesful')
-                  probe.messages[0].send({ port: this.port, host: this.host, udp: this.udp })
-                }
-              }
-            }
-          ]
-        })
-        probe.open()
-      }
+    this.server = this.dht.createServer({ reusableSocket: true }, (stream) =>
+      this._onConnection(stream)
     )
-    this.logger.debug('Authentication protocol setup, listening on keypair')
-    // start listening on the keyPair
+
     this.server.listen(this.keyPair).then(() => {
       this.state = 'listening'
       this.logger.info(`Server started, invite: ${this.invite}`)
     })
   }
 
-  // Handle TCP connections
-  _handleTCP(stream) {
+  _onConnection(stream) {
+    stream.on('error', (err) => {
+      this.logger.debug(`Stream error: ${err && err.message}`)
+    })
+
+    let buffer = b4a.alloc(0)
+    const onData = (chunk) => {
+      buffer = b4a.concat([buffer, chunk])
+      const decoded = proto.decodeHeader(buffer)
+      if (!decoded) return
+
+      stream.removeListener('data', onData)
+
+      const { capability, mode, leftover } = decoded
+      const encodedKey = z32.encode(stream.remotePublicKey)
+
+      if (!b4a.equals(capability, this.capability)) {
+        this.logger.warn(`Verification failed for ${encodedKey}`)
+        stream.destroy()
+        return
+      }
+
+      if (mode === MODE_PROBE) {
+        this.logger.info(`Probe from ${encodedKey}`)
+        this._handleProbe(stream)
+        return
+      }
+
+      if (mode === MODE_TUNNEL) {
+        this.logger.info(`Tunnel from ${encodedKey}`)
+        const count = this.activeConnections.get(encodedKey) || 0
+        this.activeConnections.set(encodedKey, count + 1)
+        if (this.udp) this._handleUDP(stream, leftover)
+        else this._handleTCP(stream, leftover)
+        return
+      }
+
+      this.logger.warn(`Unknown mode ${mode} from ${encodedKey}`)
+      stream.destroy()
+    }
+    stream.on('data', onData)
+  }
+
+  _handleProbe(stream) {
+    stream.end(proto.encodeProbeResponse({ port: this.port, host: this.host, udp: this.udp }))
+  }
+
+  _handleTCP(stream, leftover) {
     this.logger.debug('Handling TCP connection')
     const encodedKey = z32.encode(stream.remotePublicKey)
     stream.on('close', () => {
@@ -131,18 +112,11 @@ class HolesailServer extends ReadyResource {
         this.activeConnections.set(encodedKey, count)
       }
     })
-    // Connection handling using custom connection piper function
-    this.connection = libNet.pipeTcpServer(
-      stream,
-      { port: this.port, host: this.host },
-      { isServer: true, logger: this.logger },
-      this.stats
-    )
-    this.logger.debug('TCP connection piped')
+    const opts = { port: this.port, host: this.host, logger: this.logger }
+    this.connection = libNet.pipeTcpServer(stream, leftover, opts)
   }
 
-  // Handle UDP connections (updated to use framed reliable tunneling)
-  _handleUDP(stream) {
+  _handleUDP(stream, leftover) {
     this.logger.debug('Handling UDP connection')
     const encodedKey = z32.encode(stream.remotePublicKey)
     stream.on('close', () => {
@@ -155,23 +129,14 @@ class HolesailServer extends ReadyResource {
         this.activeConnections.set(encodedKey, count)
       }
     })
-    this.connection = libNet.pipeUdpFramedServer(
-      stream,
-      { port: this.port, host: this.host },
-      this.logger,
-      this.stats
-    )
-    this.logger.debug('UDP connection framed and piped')
+    const opts = { port: this.port, host: this.host, logger: this.logger }
+    this.connection = libNet.pipeUdpFramedServer(stream, leftover, opts)
   }
 
-  // Return the public/connection key
-  // done
   get invite() {
     return this._invite
   }
 
-  // resume functionality
-  // done
   async resume() {
     this.logger.info('Resuming server')
     await this.dht.resume()
@@ -179,7 +144,6 @@ class HolesailServer extends ReadyResource {
     this.logger.info('Server resumed')
   }
 
-  // done
   async pause() {
     this.logger.info('Pausing server')
     await this.dht.suspend()
@@ -187,7 +151,6 @@ class HolesailServer extends ReadyResource {
     this.logger.info('Server paused')
   }
 
-  // return information about the server
   get info() {
     return {
       type: 'server',

@@ -1,22 +1,19 @@
 {
   "name": "holesail-server",
   "version": "2.4.0",
-  "description": "Proxy any server peer-to-peer using Holepunching.",
+  "description": "peer to peer reverse proxy",
   "main": "index.js",
   "dependencies": {
     "@holesail/hyper-cmd-lib-net": "^1.1.2",
     "b4a": "^1.8.0",
-    "crypto": "npm:bare-crypto@^1.13.4",
-    "hyper-cmd-lib-keys": "^0.2.0",
     "hyperdht": "^6.30.0",
-    "protomux": "^3.10.1",
     "ready-resource": "^1.2.0",
     "z32": "^1.1.0"
   },
   "scripts": {
-    "test": "npm run lint-check && node test.mjs && bare test.mjs",
-    "lint-check": "npx prettier . --check",
-    "lint": "npx prettier . --write"
+    "test": "npm run check && node test.mjs && bare test.mjs",
+    "check": "npx prettier . --check",
+    "format": "npx prettier . --write"
   },
   "repository": {
     "type": "git",
@@ -24,8 +21,7 @@
   },
   "keywords": [
     "holesail",
-    "holesail-server",
-    "HyperDHT"
+    "holesail-server"
   ],
   "author": "supersuryaansh",
   "license": "GNU GPL v3",
