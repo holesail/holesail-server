@@ -21,8 +21,9 @@ class HolesailServer extends ReadyResource {
     this.host = opts.host
     this.port = opts.port
     this.seed = opts.seed
+    this.bootstrap = opts.bootstrap || {}
 
-    this.dht = new HyperDHT({ bootstrap: opts.bootstrap })
+    this.dht = null
     this.server = null
     this.keyPair = null
     this.state = null
@@ -36,19 +37,22 @@ class HolesailServer extends ReadyResource {
     this.keyPair = keyPair
     this.capability = capability
     this._invite = invite
+    this.dht = new HyperDHT({ bootstrap: this.bootstrap })
     await this._start()
   }
 
   async _start() {
     this.logger.info('Starting server')
 
-    this.server = this.dht.createServer({ reusableSocket: true }, (stream) =>
+    this.server = this.dht.createServer({ reusableSocket: true }, (stream) => {
+      this.emit('connection')
       this._onConnection(stream)
-    )
+    })
 
     this.server.listen(this.keyPair).then(() => {
       this.state = 'listening'
       this.logger.info(`Server started, invite: ${this.invite}`)
+      this.emit('listening')
     })
   }
 
@@ -153,11 +157,10 @@ class HolesailServer extends ReadyResource {
 
   get info() {
     return {
-      type: 'server',
       state: this.state,
       port: this.port,
       host: this.host,
-      protocol: this.udp ? 'udp' : 'tcp',
+      udp: this.udp,
       seed: this.seed,
       invite: this.invite
     }
@@ -171,6 +174,7 @@ class HolesailServer extends ReadyResource {
     if (this.connection) this.connection = null
     this.state = 'destroyed'
     this.logger.info('Server destroyed')
+    this.emit('close')
   }
 }
 

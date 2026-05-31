@@ -5,6 +5,8 @@
   "main": "index.js",
   "dependencies": {
     "@holesail/hyper-cmd-lib-net": "^1.1.2",
+    "@holesail/invite": "^1.0.0",
+    "@holesail/protocol": "^1.0.0",
     "b4a": "^1.8.0",
     "hyperdht": "^6.30.0",
     "ready-resource": "^1.2.0",
