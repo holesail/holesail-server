@@ -1,5 +1,5 @@
 const HyperDHT = require('hyperdht')
-const libNet = require('@holesail/hyper-cmd-lib-net')
+const libNet = require('/Volumes/superdisk/Developer/hyper-cmd-lib-net/index.js')
 const b4a = require('b4a')
 const z32 = require('z32')
 const ReadyResource = require('ready-resource')
@@ -12,16 +12,16 @@ class HolesailServer extends ReadyResource {
   constructor(opts = {}) {
     super()
     this.logger = opts.logger || {
-      debug: () => {},
-      info: () => {},
-      warn: () => {},
-      error: () => {}
+      debug: noop,
+      info: noop,
+      warn: noop,
+      error: noop
     }
     this.udp = opts.udp === true
     this.host = opts.host
     this.port = opts.port
     this.seed = opts.seed
-    this.bootstrap = opts.bootstrap || {}
+    this.bootstrap = opts.bootstrap || []
 
     this.dht = null
     this.server = null
@@ -37,7 +37,7 @@ class HolesailServer extends ReadyResource {
     this.keyPair = keyPair
     this.capability = capability
     this._invite = invite
-    this.dht = new HyperDHT({ bootstrap: this.bootstrap })
+    this.dht = new HyperDHT()
     await this._start()
   }
 
@@ -51,8 +51,8 @@ class HolesailServer extends ReadyResource {
 
     this.server.listen(this.keyPair).then(() => {
       this.state = 'listening'
-      this.logger.info(`Server started, invite: ${this.invite}`)
       this.emit('listening')
+      this.logger.info(`Server started, invite: ${this.invite}`)
     })
   }
 
@@ -177,5 +177,7 @@ class HolesailServer extends ReadyResource {
     this.emit('close')
   }
 }
+
+const noop = () => {}
 
 module.exports = HolesailServer
