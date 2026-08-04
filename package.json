@@ -13,7 +13,8 @@
     "z32": "^1.1.0"
   },
   "scripts": {
-    "test": "npm run check && node test.mjs && bare test.mjs",
+    "test": "npm run check && node test/index.js",
+    "test-bare": "npm run check && bare test/index.js",
     "check": "npx prettier . --check",
     "format": "npx prettier . --write"
   },
@@ -33,7 +34,9 @@
   "homepage": "https://github.com/holesail/holesail-server#readme",
   "devDependencies": {
     "brittle": "^3.19.1",
-    "prettier": "^3.8.2",
+    "crypto": "npm:bare-crypto@^1.15.3",
+    "dgram": "npm:bare-dgram@^1.0.1",
+    "prettier": "^3.9.6",
     "prettier-config-holepunch": "^2.0.0"
   }
 }

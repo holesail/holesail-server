@@ -1,5 +1,5 @@
 const HyperDHT = require('hyperdht')
-const libNet = require('/Volumes/superdisk/Developer/hyper-cmd-lib-net/index.js')
+const libNet = require('@holesail/hyper-cmd-lib-net')
 const b4a = require('b4a')
 const z32 = require('z32')
 const ReadyResource = require('ready-resource')
@@ -37,7 +37,7 @@ class HolesailServer extends ReadyResource {
     this.keyPair = keyPair
     this.capability = capability
     this._invite = invite
-    this.dht = new HyperDHT()
+    this.dht = new HyperDHT({ bootstrap: this.bootstrap })
     await this._start()
   }
 
@@ -49,11 +49,10 @@ class HolesailServer extends ReadyResource {
       this._onConnection(stream)
     })
 
-    this.server.listen(this.keyPair).then(() => {
-      this.state = 'listening'
-      this.emit('listening')
-      this.logger.info(`Server started, invite: ${this.invite}`)
-    })
+    await this.server.listen(this.keyPair)
+    this.state = 'listening'
+    this.emit('listening')
+    this.logger.info(`Server started, invite: ${this.invite}`)
   }
 
   _onConnection(stream) {
@@ -174,7 +173,6 @@ class HolesailServer extends ReadyResource {
     if (this.connection) this.connection = null
     this.state = 'destroyed'
     this.logger.info('Server destroyed')
-    this.emit('close')
   }
 }
 

@@ -1,4 +1,4 @@
-name: Test Node Status
+name: Test Bare Status
 on:
   push:
     branches:
@@ -19,5 +19,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+      - run: npm install -g bare
       - run: npm install
-      - run: npm run test
+      - run: npm run test-bare
