@@ -4,11 +4,11 @@
   "description": "peer to peer reverse proxy",
   "main": "index.js",
   "dependencies": {
-    "@holesail/hyper-cmd-lib-net": "^1.1.2",
+    "@holesail/hyper-cmd-lib-net": "^2.0.0",
     "@holesail/invite": "^1.0.0",
     "@holesail/protocol": "^1.0.0",
     "b4a": "^1.8.0",
-    "hyperdht": "^6.30.0",
+    "hyperdht": "6.32",
     "ready-resource": "^1.2.0",
     "z32": "^1.1.0"
   },
