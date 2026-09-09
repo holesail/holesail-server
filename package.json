@@ -8,7 +8,7 @@
     "@holesail/invite": "^1.2.0",
     "@holesail/protocol": "^1.0.0",
     "b4a": "^1.8.1",
-    "hyperdht": "6.32",
+    "hyperdht": "^6.34.0",
     "ready-resource": "^1.2.0",
     "z32": "^1.1.0"
   },
