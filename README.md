@@ -1,148 +1,118 @@
 # Holesail Server
 
-[Join our Discord Support Server](https://discord.gg/TQVacE7Vnj)
+Node.js and Bare server for exposing a local TCP/UDP service over HyperDHT - P2P reverse proxying, no signalling server required.
 
-Holesail Server enables you to reverse proxy any local server peer-to-peer (P2P) using HyperDHT, no signalling server
-required.
-
----
-
-Note: V2 has breaking changes, V2 is not compatible with V1 and will break infuture.
-
-## Installation
-
-Install the Holesail Server module via npm:
-
-```bash
+```
 npm install holesail-server
 ```
 
----
-
 ## Usage
 
-### Importing the Module
-
-Require the module in your project:
-
-```javascript
+```js
 const HolesailServer = require('holesail-server')
+
+const server = new HolesailServer({
+  port: 8080,
+  host: '127.0.0.1'
+})
+
+await server.ready()
+
+console.log(server.invite) // share this - anyone holding it can connect a client
 ```
 
-### Creating an Instance
+A [holesail-client](https://github.com/holesail/holesail-client) given this invite can reach `127.0.0.1:8080` on this machine from anywhere.
 
-Create a new instance of the `HolesailServer` class:
+### Fixed connection key
 
-```javascript
-const server = new HolesailServer()
-```
+By default the server generates a random keypair (and invite) on every `ready()`. Pass a `seed` to get the same one every time:
 
-### Starting the Server
-
-Start the server using the `start` method and retrieve its public key:
-
-```javascript
-await server.start({ port: 5000, host: '127.0.0.1' }, () => {
-  console.log('Server started')
-  console.log(server.key)
-
-  setTimeout(() => {
-    server.destroy()
-    console.log('Server destroyed')
-  }, 6000)
+```js
+const server = new HolesailServer({
+  port: 8080,
+  host: '127.0.0.1',
+  seed: 'a1b2c3...' // 64 hex chars (32 bytes)
 })
 ```
 
-### Using a Fixed Connection Key
+Use `require('@holesail/invite').randomSeed()` to generate one.
 
-Optionally, you can set a `seed` to ensure the server generates the same connection key every time:
+### UDP
 
-```javascript
-await server.start(
-  {
-    port: 5000,
-    host: '127.0.0.1',
-    seed: '4917816487c1822049939ff1abbf515663275105d01361bbc84fe2000e594539'
-  },
-  () => {
-    console.log('Server started')
-    console.log(server.key)
-
-    setTimeout(async () => {
-      await server.destroy()
-      console.log('Server destroyed')
-    }, 6000)
-  }
-)
-
-// Note: seed must be a 64-character long string.
+```js
+const server = new HolesailServer({ port: 53, host: '127.0.0.1', udp: true })
 ```
 
-### Destroying the Server
+### Closing
 
-Use the `destroy` method to stop the server and clean up resources:
-
-```javascript
-await server.destroy()
+```js
+await server.close()
 ```
 
----
+### Pausing and resuming
 
-## API Reference
+```js
+await server.pause() // stop accepting new connections, keep existing tunnels alive
+await server.resume()
+```
 
-### `await server.start(options, callback)`
+## API
 
-Starts the server
+#### `const server = new HolesailServer(opts)`
 
-#### Parameters:
+Creates a server. Nothing is listening until `ready()` is called.
 
-- `options` (object):
-  - `port` (number, required): The port to listen on.
-  - `host` (string, required): The local address to bind to. Use `"0.0.0.0"` to listen on all interfaces.
-  - `seed` (string, optional): A 64-character string used to generate a consistent connection key.
-  - `secure` (boolean, optional, recommended): Prevents leaking access capability to HyperDHT by listening on a
-    different seed than the one needed to connect.
-  - `udp` (boolean, optional): Enables UDP instead of TCP connections.
+```js
+{
+  port: 8080,            // required - local port to forward tunneled connections to
+  host: '127.0.0.1',     // required - local host to forward tunneled connections to
+  udp: false,            // true to tunnel UDP instead of TCP. Defaults to false
+  seed: '<hex string>',  // optional 64-char hex string for a deterministic keypair/invite
+  bootstrap: [],         // optional custom HyperDHT bootstrap nodes
+  logger: undefined      // optional {debug, info, warn, error} logger
+}
+```
 
-- `callback` (function): A function that is called when the server successfully starts.
+#### `await server.ready()`
 
----
+Generates a keypair (from `seed` if given, otherwise random) and starts listening on the DHT. Resolves once `server.invite` is ready to share.
 
-### `server.key`
+#### `server.invite`
 
-Retrieves the server's connection key. Use this key to connect to the server from a client.
+The invite string clients need to connect. Encodes the server's public key and a capability token, a raw DHT connection alone isn't enough to open a tunnel, the client must present the matching capability.
 
----
+#### `server.on('listening')`
 
-### `server.pause()`
+Emitted once the server is listening and `server.invite` is available.
 
-Pause the server.
+#### `server.on('connection')`
 
----
+Emitted for every incoming stream, before the capability check runs - useful for connection-rate logging or metrics. Firing doesn't mean the connection presented a valid capability; invalid streams are destroyed right after.
 
-### `server.resume()`
+#### `server.info`
 
-Resume the server.
+```js
+{
+  state: 'listening', // 'starting' | 'listening' | 'paused' | 'destroyed'
+  port: 8080,
+  host: '127.0.0.1',
+  udp: false,
+  seed: '<hex string>',
+  invite: '<string>'
+}
+```
 
----
+#### `await server.pause()`
 
-### `server.info`
+Suspends the underlying DHT node without tearing anything down.
 
-Returns an object containing server information.
+#### `await server.resume()`
 
----
+Resumes a paused server.
 
-### `await server.destroy()`
+#### `await server.close()`
 
-Stops the server and cleans up resources.
-
----
-
-### `await put(data)`
-
-Put a mutable record on DHT. Max size 1 KB
-
----
+Destroys the DHT node and all open tunnels.
 
 ## License
 
