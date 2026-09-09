@@ -6,7 +6,7 @@ const HolesailServer = require('../index.js')
 
 // Small local DHT swarm bootstrapped off of a single loopback node instead of
 // the public network, so tests are fast, deterministic, and offline.
-async function createTestnet(t, size = 3) {
+async function createTestnet(t, size = 30) {
   return testnet(size, { teardown: t.teardown })
 }
 
