@@ -1,6 +1,8 @@
 # Holesail Server
 
-Node.js and Bare server for exposing a local TCP/UDP service over HyperDHT - P2P reverse proxying, no signalling server required.
+Reverse proxy a local TCP/UDP service over HyperDHT - P2P reverse proxying, no signalling server required.
+
+> ** V3 is still experimental and under heavy development. Expect breaking changes. Consider using V2 instead**
 
 ```
 npm install holesail-server
