@@ -1,20 +1,22 @@
 {
   "name": "holesail-server",
   "version": "2.4.0",
-  "description": "Proxy any server peer-to-peer using Holepunching.",
+  "description": "peer to peer reverse proxy",
   "main": "index.js",
   "dependencies": {
-    "@holesail/hyper-cmd-lib-net": "^1.1.2",
-    "b4a": "^1.7.3",
-    "hyper-cmd-lib-keys": "^0.2.0",
-    "hyperdht": "^6.27.0",
-    "z32": "^1.1.0",
-    "holesail-logger": "^1.1.0"
+    "@holesail/hyper-cmd-lib-net": "^2.0.0",
+    "@holesail/invite": "^1.2.0",
+    "@holesail/protocol": "^1.0.0",
+    "b4a": "^1.8.1",
+    "hyperdht": "^6.34.0",
+    "ready-resource": "^1.2.0",
+    "z32": "^1.1.0"
   },
   "scripts": {
-    "test": "npm run lint-check && node test.mjs && bare test.mjs",
-    "lint-check": "npx prettier . --check",
-    "lint": "npx prettier . --write"
+    "test": "npm run check && node test/index.js",
+    "test-bare": "npm run check && bare test/index.js",
+    "check": "npx prettier . --check",
+    "format": "npx prettier . --write"
   },
   "repository": {
     "type": "git",
@@ -22,18 +24,19 @@
   },
   "keywords": [
     "holesail",
-    "holesail-server",
-    "HyperDHT"
+    "holesail-server"
   ],
   "author": "supersuryaansh",
-  "license": "GNU GPL v3",
+  "license": "AGPL-3.0",
   "bugs": {
     "url": "https://github.com/holesail/holesail-server/issues"
   },
   "homepage": "https://github.com/holesail/holesail-server#readme",
   "devDependencies": {
-    "brittle": "^3.10.1",
-    "prettier": "^3.6.2",
+    "brittle": "^3.19.1",
+    "crypto": "npm:bare-crypto@^1.15.3",
+    "dgram": "npm:bare-dgram@^1.0.1",
+    "prettier": "^3.9.6",
     "prettier-config-holepunch": "^2.0.0"
   }
 }
